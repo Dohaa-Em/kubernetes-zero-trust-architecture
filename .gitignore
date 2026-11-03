@@ -1,0 +1,18 @@
+# secrets et accès
+*.kubeconfig
+kubeconfig*
+*.key
+*.pem
+.env
+.env.*
+vault-init*
+vault-keys*
+secrets-local/
+# générés
+*.log
+*.tfstate*
+.terraform/
+.DS_Store
+# outils locaux
+CLAUDE.md
+.claude/
