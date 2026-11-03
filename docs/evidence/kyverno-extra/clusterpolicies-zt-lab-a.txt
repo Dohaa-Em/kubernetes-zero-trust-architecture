@@ -1,0 +1,6 @@
+NAME                                 ADMISSION   BACKGROUND   READY   AGE    MESSAGE
+best-practices-disallow-latest-tag   true        true         True    60m    Ready
+best-practices-require-limits        true        true         True    60m    Ready
+defaults-generate-default-deny       true        true         True    40s    Ready
+defaults-mutate-pod-defaults         true        true         True    104s   Ready
+supply-chain-restrict-images         true        true         True    60m    Ready

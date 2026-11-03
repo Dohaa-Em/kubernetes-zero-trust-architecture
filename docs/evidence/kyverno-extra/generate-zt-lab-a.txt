@@ -1,0 +1,9 @@
+=== Generate test - zt-lab-a - 2026-11-04T00:28:19+02:00
+namespace/zt-gen-test created
+--- NetworkPolicy generee automatiquement :
+NAME               POD-SELECTOR   AGE
+default-deny-all   <none>         5s
+--- On supprime la politique generee, synchronize doit la recreer :
+networkpolicy.networking.k8s.io "default-deny-all" deleted
+NAME               POD-SELECTOR   AGE
+default-deny-all   <none>         8s

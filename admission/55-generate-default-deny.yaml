@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: defaults-generate-default-deny
+  annotations:
+    policies.kyverno.io/title: Default deny for new zt namespaces
+    policies.kyverno.io/category: Network
+spec:
+  rules:
+    - name: default-deny-new-namespace
+      match:
+        any:
+          - resources: {kinds: [Namespace], names: ["zt-*"]}
+      generate:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: default-deny-all
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        data:
+          spec:
+            podSelector: {}
+            policyTypes: [Ingress, Egress]

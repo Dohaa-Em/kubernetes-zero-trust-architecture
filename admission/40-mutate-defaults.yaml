@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: defaults-mutate-pod-defaults
+  annotations:
+    policies.kyverno.io/title: Safe defaults for pods
+    policies.kyverno.io/category: Best Practices
+spec:
+  rules:
+    - name: add-part-of-label-and-disable-token
+      match:
+        any:
+          - resources: {kinds: [Pod], namespaces: ["zt-*"]}
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(app.kubernetes.io/part-of): zero-trust-k8s
+          spec:
+            +(automountServiceAccountToken): false
