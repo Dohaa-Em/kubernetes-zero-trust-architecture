@@ -1,0 +1,16 @@
+=== Test NetworkPolicy (default deny egress sur zt-attacker) - zt-lab-a - 2026-11-03T22:58:29+02:00
+--- AVANT politique
+{
+  "status": "OK"
+} code=0
+networkpolicy.networking.k8s.io/test-deny-egress created
+--- APRES politique
+command terminated with exit code 28
+ code=28
+--- Hubble : paquets refuses
+Nov  3 20:58:31.240: zt-attacker/attacker:41286 (ID:43497) <> kube-system/coredns-7cfb7bc9c7-6pqjq:53 (ID:28024) Policy denied DROPPED (UDP)
+Nov  3 20:58:33.743: zt-attacker/attacker:41286 (ID:43497) <> kube-system/coredns-7cfb7bc9c7-6pqjq:53 (ID:28024) policy-verdict:none EGRESS DENIED (UDP)
+Nov  3 20:58:33.743: zt-attacker/attacker:41286 (ID:43497) <> kube-system/coredns-7cfb7bc9c7-6pqjq:53 (ID:28024) Policy denied DROPPED (UDP)
+Nov  3 20:58:33.743: zt-attacker/attacker:41286 (ID:43497) <> kube-system/coredns-7cfb7bc9c7-6pqjq:53 (ID:28024) policy-verdict:none EGRESS DENIED (UDP)
+Nov  3 20:58:33.743: zt-attacker/attacker:41286 (ID:43497) <> kube-system/coredns-7cfb7bc9c7-6pqjq:53 (ID:28024) Policy denied DROPPED (UDP)
+networkpolicy.networking.k8s.io "test-deny-egress" deleted

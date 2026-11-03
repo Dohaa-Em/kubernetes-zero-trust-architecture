@@ -1,12 +1,11 @@
 # Mesure : baseline
-Date : 2026-11-03T22:30:11+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64 | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
+Date : 2026-11-03T22:59:01+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64 | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
 
 ## S1 : depuis le pod frontal compromis
 | Cible | Résultat |
 | --- | --- |
 | API (zt-api:9898) | ATTEIGNABLE |
 | Base (zt-data:5432) | ATTEIGNABLE |
-| Pod attacker (zt-attacker) | ATTEIGNABLE |
 | Serveur API Kubernetes | ATTEIGNABLE |
 | Internet (1.1.1.1:443) | ATTEIGNABLE |
 

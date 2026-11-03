@@ -20,7 +20,6 @@ echo "## S1 : depuis le pod frontal compromis"
 echo "| Cible | Résultat |"; echo "| --- | --- |"
 reach "API (zt-api:9898)"        "wget -q -T2 -O /dev/null http://api.zt-api.svc:9898/healthz"
 reach "Base (zt-data:5432)"      "nc -z -w2 database.zt-data.svc 5432"
-reach "Pod attacker (zt-attacker)" "nc -z -w2 -w2 $(getent hosts attacker.zt-attacker.svc | cut -d\" \" -f1) 80 || nc -z -w2 kubernetes.default.svc 443"
 reach "Serveur API Kubernetes"   "nc -z -w2 kubernetes.default.svc 443"
 reach "Internet (1.1.1.1:443)"   "nc -z -w3 1.1.1.1 443"
 echo
