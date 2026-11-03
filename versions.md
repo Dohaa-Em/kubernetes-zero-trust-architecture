@@ -4,8 +4,8 @@ Les deux membres installent exactement ces versions. À remplir au début de la 
 
 | Outil | Version | Noyau / remarque |
 | --- | --- | --- |
-| Système (A) | Debian 13 | |
-| Système (B) | Ubuntu LTS | |
+| Système, Abir Majdi (zt-lab-a) | Debian 13 | |
+| Système, Doha (zt-lab-b) | Ubuntu LTS | |
 | k3s | | |
 | Cilium | | |
 | Hubble | | |
