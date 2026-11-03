@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata: {name: sa-frontend, namespace: zt-frontend}
+automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -29,6 +30,7 @@ spec:
         zt/zone: entry
     spec:
       serviceAccountName: sa-frontend
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
