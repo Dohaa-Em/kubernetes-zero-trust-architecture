@@ -1,0 +1,10 @@
+Error from server: error when creating "STDIN": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/zt-attacker/kyverno-test was blocked due to the following policies 
+
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/containers/0/image/'
+best-practices-require-limits:
+  require-cpu-memory-limits: 'validation error: CPU and memory limits are required. rule require-cpu-memory-limits failed at path /spec/containers/0/resources/limits/'
+supply-chain-restrict-images:
+  allowed-images-only: 'validation error: Image not in the project allowlist. rule allowed-images-only failed at path /spec/containers/0/image/'

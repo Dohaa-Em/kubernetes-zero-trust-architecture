@@ -1,0 +1,4 @@
+NAME                                 ADMISSION   BACKGROUND   READY   AGE   MESSAGE
+best-practices-disallow-latest-tag   true        true         True    23m   Ready
+best-practices-require-limits        true        true         True    23m   Ready
+supply-chain-restrict-images         true        true         True    23m   Ready
