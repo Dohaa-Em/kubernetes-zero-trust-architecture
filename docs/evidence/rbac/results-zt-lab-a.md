@@ -1,5 +1,5 @@
 # Mesure : rbac
-Date : 2026-11-03T23:09:29+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64 | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
+Date : 2026-11-03T23:10:37+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64 | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
 
 ## S1 : depuis le pod frontal compromis
 | Cible | Résultat |
