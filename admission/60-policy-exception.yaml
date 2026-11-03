@@ -1,0 +1,15 @@
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: allow-latest-tag-for-test
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: best-practices-disallow-latest-tag
+      ruleNames: [require-image-tag, validate-image-tag]
+  match:
+    any:
+      - resources:
+          kinds: [Pod]
+          namespaces: [zt-attacker]
+          names: ["latest-exception-*"]

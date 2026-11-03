@@ -1,0 +1,16 @@
+=== PolicyException test - zt-lab-a - 2026-11-04T00:45:48+02:00
+--- 1. Sans exception (doit etre refuse) :
+Error from server: error when creating "admission/tests-pod-latest.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/zt-attacker/latest-exception-test was blocked due to the following policies 
+
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/containers/0/image/'
+--- 2. On applique l'exception :
+Warning: kyverno.io/v2 PolicyException is deprecated and will be removed in a future release; migrate to PolicyException (policies.kyverno.io), see https://kyverno.io/docs/guides/migration-to-cel/
+Warning: kyverno.io/v2beta1 PolicyException is deprecated and will be removed in a future release; migrate to PolicyException (policies.kyverno.io), see https://kyverno.io/docs/guides/migration-to-cel/
+policyexception.kyverno.io/allow-latest-tag-for-test created
+--- 3. Avec exception (doit etre accepte) :
+pod/latest-exception-test created
+NAME                    READY   STATUS              RESTARTS   AGE
+latest-exception-test   0/1     ContainerCreating   0          0s

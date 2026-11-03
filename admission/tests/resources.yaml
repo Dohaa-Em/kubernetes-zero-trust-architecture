@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata: {name: good-pod, namespace: zt-attacker}
+spec:
+  containers:
+  - name: c
+    image: curlimages/curl:8.10.1
+    resources: {limits: {cpu: 50m, memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: bad-pod, namespace: zt-attacker}
+spec:
+  containers:
+  - name: c
+    image: busybox:latest
