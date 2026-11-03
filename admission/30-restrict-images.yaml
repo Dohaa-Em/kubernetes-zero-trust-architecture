@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: supply-chain-restrict-images
+  annotations:
+    policies.kyverno.io/title: Restrict images to an allowlist
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  background: true
+  rules:
+    - name: allowed-images-only
+      match:
+        any:
+          - resources: {kinds: [Pod], namespaces: ["zt-*"]}
+      validate:
+        failureAction: Enforce
+        message: "Image not in the project allowlist."
+        pattern:
+          spec:
+            containers:
+              - image: "ghcr.io/stefanprodan/* | nginxinc/nginx-unprivileged:* | postgres:* | curlimages/curl:*"
