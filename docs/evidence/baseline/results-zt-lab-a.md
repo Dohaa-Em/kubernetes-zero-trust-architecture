@@ -1,39 +1,24 @@
-# Resultats baseline - zt-lab-a
+# Mesure : baseline
+Date : 2026-11-03T22:30:11+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64 | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
 
-- Date : 2026-11-03T20:08:19Z
-- OS : Debian GNU/Linux 13 (trixie)
-- k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
-- Cilium : quay.io/cilium/cilium:v1.20.4
-
-## S1 - Pod frontend compromis (depuis le pod frontend)
-| Cible | Resultat |
-|---|---|
+## S1 : depuis le pod frontal compromis
+| Cible | Résultat |
+| --- | --- |
 | API (zt-api:9898) | ATTEIGNABLE |
-| Base de donnees (zt-data:5432) | ATTEIGNABLE |
-| API Kubernetes (443) | ATTEIGNABLE |
+| Base (zt-data:5432) | ATTEIGNABLE |
+| Pod attacker (zt-attacker) | ATTEIGNABLE |
+| Serveur API Kubernetes | ATTEIGNABLE |
 | Internet (1.1.1.1:443) | ATTEIGNABLE |
 
-## S1b - Pod attaquant (zt-attacker)
-| Cible | Resultat |
-|---|---|
-| API depuis l'attaquant | ATTEIGNABLE |
-| Internet depuis l'attaquant | ATTEIGNABLE |
+## S2 : droits du ServiceAccount sa-frontend
+- Lire les Secrets de zt-data : yes
+- Lire les Secrets de zt-frontend : yes
+- Créer des pods dans zt-api : yes
+- Exécuter dans un autre pod (zt-api) : yes
+- Nombre de règles autorisées dans zt-data : 96
 
-## S2 - ServiceAccount sa-frontend vole
-| Action | Resultat |
-|---|---|
-| lire les secrets de zt-data | yes |
-| lire les secrets de zt-api | yes |
-| creer des pods dans zt-data | yes |
-| supprimer des deployments zt-api | yes |
-| creer des roles dans zt-data | no |
-| nb de lignes de droits dans zt-data | 96 |
-| token monte dans le pod frontend | OUI |
+## S3 : un pod privilégié avec hostPath / est-il accepté ?
+- ACCEPTÉ (aucun contrôle d'admission)
 
-## S3 - Configuration dangereuse (dry-run serveur)
-| Pod privilegie + hostPath | ACCEPTE |
-
-## S4 - Fuite du secret db-creds
-| Test | Resultat |
-|---|---|
-| Lecture par sa-frontend | LISIBLE |
+## S4 : le mot de passe de la base est-il lisible par le pod compromis ?
+- OUI, lisible par sa-frontend

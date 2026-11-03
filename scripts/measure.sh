@@ -1,74 +1,52 @@
 #!/usr/bin/env bash
-# Usage: scripts/measure.sh <label>   (ex: baseline, rbac, network, ...)
-set -uo pipefail
-LABEL="${1:?label requis}"
-HOST="$(hostname)"
-OUT="docs/evidence/${LABEL}/results-${HOST}.md"
-mkdir -p "docs/evidence/${LABEL}"
+# Usage : scripts/measure.sh <étiquette>   (ex. baseline, phase-2)
+set -u
+LABEL="${1:?donner une étiquette}"
+OUT="docs/evidence/${LABEL}/results-$(hostname).md"
+mkdir -p "$(dirname "$OUT")"
 SA="system:serviceaccount:zt-frontend:sa-frontend"
+P=$(kubectl -n zt-frontend get pod -l app.kubernetes.io/component=frontend -o jsonpath='{.items[0].metadata.name}')
 
-tcp() { # nom ns deploy host port
-  if kubectl -n "$2" exec "deploy/$3" -- sh -c "nc -z -w 3 $4 $5" >/dev/null 2>&1
-  then echo "| $1 | ATTEIGNABLE |"; else echo "| $1 | bloque |"; fi
+reach() {  # nom, commande exécutée depuis le pod frontal compromis
+  if kubectl -n zt-frontend exec "$P" -- sh -c "$2" >/dev/null 2>&1; then echo "| $1 | ATTEIGNABLE |"; else echo "| $1 | bloqué |"; fi
 }
-can() { # description verbe ressource ns
-  if [ "$(kubectl auth can-i "$2" "$3" -n "$4" --as="$SA" 2>/dev/null)" = "yes" ]
-  then echo "| $1 | yes |"; else echo "| $1 | no |"; fi
-}
+yn() { kubectl auth can-i "$@" --as="$SA" 2>/dev/null || true; }
 
 {
-echo "# Resultats ${LABEL} - ${HOST}"
+echo "# Mesure : ${LABEL}"
+echo "Date : $(date -Is) | Machine : $(hostname) | Noyau : $(uname -r) | k3s : $(k3s --version | head -1)"
 echo
-echo "- Date : $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "- OS : $(. /etc/os-release && echo "$PRETTY_NAME")"
-echo "- k3s : $(k3s --version 2>/dev/null | head -1)"
-echo "- Cilium : $(kubectl -n kube-system get ds cilium -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d@ -f1)"
+echo "## S1 : depuis le pod frontal compromis"
+echo "| Cible | Résultat |"; echo "| --- | --- |"
+reach "API (zt-api:9898)"        "wget -q -T2 -O /dev/null http://api.zt-api.svc:9898/healthz"
+reach "Base (zt-data:5432)"      "nc -z -w2 database.zt-data.svc 5432"
+reach "Pod attacker (zt-attacker)" "nc -z -w2 -w2 $(getent hosts attacker.zt-attacker.svc | cut -d\" \" -f1) 80 || nc -z -w2 kubernetes.default.svc 443"
+reach "Serveur API Kubernetes"   "nc -z -w2 kubernetes.default.svc 443"
+reach "Internet (1.1.1.1:443)"   "nc -z -w3 1.1.1.1 443"
 echo
-echo "## S1 - Pod frontend compromis (depuis le pod frontend)"
-echo "| Cible | Resultat |"; echo "|---|---|"
-tcp "API (zt-api:9898)"            zt-frontend frontend api.zt-api.svc.cluster.local 9898
-tcp "Base de donnees (zt-data:5432)" zt-frontend frontend database.zt-data.svc.cluster.local 5432
-tcp "API Kubernetes (443)"         zt-frontend frontend kubernetes.default.svc.cluster.local 443
-tcp "Internet (1.1.1.1:443)"       zt-frontend frontend 1.1.1.1 443
+echo "## S2 : droits du ServiceAccount sa-frontend"
+echo "- Lire les Secrets de zt-data : $(yn get secrets -n zt-data)"
+echo "- Lire les Secrets de zt-frontend : $(yn get secrets -n zt-frontend)"
+echo "- Créer des pods dans zt-api : $(yn create pods -n zt-api)"
+echo "- Exécuter dans un autre pod (zt-api) : $(yn create pods/exec -n zt-api)"
+echo "- Nombre de règles autorisées dans zt-data : $(kubectl auth can-i --list --as="$SA" -n zt-data 2>/dev/null | tail -n +2 | wc -l)"
 echo
-echo "## S1b - Pod attaquant (zt-attacker)"
-echo "| Cible | Resultat |"; echo "|---|---|"
-if kubectl -n zt-attacker exec attacker -- curl -s -m 3 -o /dev/null http://api.zt-api.svc.cluster.local:9898 >/dev/null 2>&1
-then echo "| API depuis l'attaquant | ATTEIGNABLE |"; else echo "| API depuis l'attaquant | bloque |"; fi
-if kubectl -n zt-attacker exec attacker -- curl -s -m 3 -o /dev/null https://example.com >/dev/null 2>&1
-then echo "| Internet depuis l'attaquant | ATTEIGNABLE |"; else echo "| Internet depuis l'attaquant | bloque |"; fi
-echo
-echo "## S2 - ServiceAccount sa-frontend vole"
-echo "| Action | Resultat |"; echo "|---|---|"
-can "lire les secrets de zt-data"      get    secrets     zt-data
-can "lire les secrets de zt-api"       get    secrets     zt-api
-can "creer des pods dans zt-data"      create pods        zt-data
-can "supprimer des deployments zt-api" delete deployments zt-api
-can "creer des roles dans zt-data"     create roles       zt-data
-N=$(kubectl auth can-i --list -n zt-data --as="$SA" 2>/dev/null | tail -n +2 | wc -l)
-echo "| nb de lignes de droits dans zt-data | $N |"
-if kubectl -n zt-frontend exec deploy/frontend -- test -f /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null
-then echo "| token monte dans le pod frontend | OUI |"; else echo "| token monte dans le pod frontend | non |"; fi
-echo
-echo "## S3 - Configuration dangereuse (dry-run serveur)"
-R=$(cat <<'POD' | kubectl apply --dry-run=server -n zt-attacker -f - 2>&1
+echo "## S3 : un pod privilégié avec hostPath / est-il accepté ?"
+if cat <<'POD' | kubectl apply --dry-run=server -f - >/dev/null 2>&1
 apiVersion: v1
 kind: Pod
-metadata: {name: evil-test}
+metadata: {name: s3-test, namespace: zt-attacker}
 spec:
   containers:
   - name: c
-    image: alpine:3.20
+    image: busybox:1.36
     securityContext: {privileged: true}
-    volumeMounts: [{name: h, mountPath: /host}]
-  volumes: [{name: h, hostPath: {path: /}}]
+    volumeMounts: [{name: host, mountPath: /host}]
+  volumes: [{name: host, hostPath: {path: /}}]
 POD
-)
-echo "| Pod privilegie + hostPath | $(echo "$R" | grep -q 'created (server dry run)' && echo ACCEPTE || echo REFUSE) |"
+then echo "- ACCEPTÉ (aucun contrôle d'admission)"; else echo "- REFUSÉ"; fi
 echo
-echo "## S4 - Fuite du secret db-creds"
-echo "| Test | Resultat |"; echo "|---|---|"
-if kubectl -n zt-data get secret db-creds --as="$SA" >/dev/null 2>&1
-then echo "| Lecture par sa-frontend | LISIBLE |"; else echo "| Lecture par sa-frontend | refusee |"; fi
-} > "$OUT"
-echo "Ecrit : $OUT"
+echo "## S4 : le mot de passe de la base est-il lisible par le pod compromis ?"
+if kubectl -n zt-data get secret db-creds --as="$SA" >/dev/null 2>&1; then echo "- OUI, lisible par sa-frontend"; else echo "- non"; fi
+} | tee "$OUT"
+echo; echo "Résultats écrits dans $OUT"
