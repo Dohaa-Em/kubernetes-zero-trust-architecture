@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-api-to-database-egress, namespace: zt-api}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/component: api}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: zt-data}
+          podSelector:
+            matchLabels: {app.kubernetes.io/component: database}
+      ports:
+        - {protocol: TCP, port: 5432}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-api-to-database-ingress, namespace: zt-data}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/component: database}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: zt-api}
+          podSelector:
+            matchLabels: {app.kubernetes.io/component: api}
+      ports:
+        - {protocol: TCP, port: 5432}
