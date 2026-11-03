@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: sa-attacker, namespace: zt-attacker}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attacker
+  namespace: zt-attacker
+  labels:
+    app.kubernetes.io/name: attacker
+    app.kubernetes.io/component: attacker
+    app.kubernetes.io/part-of: zero-trust-k8s
+    zt/zone: attacker
+spec:
+  serviceAccountName: sa-attacker
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 100
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: curl
+    image: curlimages/curl:8.10.1
+    command: ["sleep", "infinity"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities: {drop: [ALL]}
+    resources:
+      requests: {cpu: 10m, memory: 16Mi}
+      limits: {cpu: 100m, memory: 64Mi}

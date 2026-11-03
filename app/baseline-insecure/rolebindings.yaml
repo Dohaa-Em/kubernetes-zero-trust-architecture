@@ -1,0 +1,18 @@
+# VOLONTAIREMENT INSECURE : etat de depart a supprimer en phase 2
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: baseline-frontend-edit, namespace: zt-frontend}
+subjects: [{kind: ServiceAccount, name: sa-frontend, namespace: zt-frontend}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: edit}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: baseline-frontend-edit, namespace: zt-api}
+subjects: [{kind: ServiceAccount, name: sa-frontend, namespace: zt-frontend}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: edit}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: baseline-frontend-edit, namespace: zt-data}
+subjects: [{kind: ServiceAccount, name: sa-frontend, namespace: zt-frontend}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: edit}
