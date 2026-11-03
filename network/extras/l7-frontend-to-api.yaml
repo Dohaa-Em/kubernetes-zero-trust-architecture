@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: l7-frontend-to-api
+  namespace: zt-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/component: frontend
+            k8s:io.kubernetes.pod.namespace: zt-frontend
+      toPorts:
+        - ports:
+            - port: "9898"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "/healthz"

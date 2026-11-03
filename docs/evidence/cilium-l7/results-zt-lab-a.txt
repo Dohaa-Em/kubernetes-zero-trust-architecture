@@ -1,0 +1,14 @@
+=== L7 demo - zt-lab-a - 2026-11-04T00:24:09+02:00
+--- GET /healthz (autorise)
+{
+  "status": "OK"
+} code=0
+--- GET /version (doit etre refuse par la regle L7)
+wget: server returned error: HTTP/1.1 403 Forbidden
+command terminated with exit code 1
+ code=1
+--- Hubble L7
+Nov  3 22:24:10.721: zt-frontend/frontend-5d9d6df54-tkphc:43768 (ID:26834) -> zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) http-request FORWARDED (HTTP/1.1 GET http://api.zt-api.svc:9898/healthz)
+Nov  3 22:24:10.740: zt-frontend/frontend-5d9d6df54-tkphc:43768 (ID:26834) <- zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) http-response FORWARDED (HTTP/1.1 200 37ms (GET http://api.zt-api.svc:9898/healthz))
+Nov  3 22:24:11.764: zt-frontend/frontend-5d9d6df54-tkphc:43772 (ID:26834) -> zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) http-request DROPPED (HTTP/1.1 GET http://api.zt-api.svc:9898/version)
+Nov  3 22:24:11.767: zt-frontend/frontend-5d9d6df54-tkphc:43772 (ID:26834) <- zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) http-response FORWARDED (HTTP/1.1 403 3ms (GET http://api.zt-api.svc:9898/version))
