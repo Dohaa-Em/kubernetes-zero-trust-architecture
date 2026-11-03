@@ -14,3 +14,4 @@ Les deux membres installent exactement ces versions. À remplir au début de la 
 | Vault | | |
 | External Secrets Operator | | |
 | Helm | | |
+- Kyverno chart: 3.9.2 (app v1.19.2)
