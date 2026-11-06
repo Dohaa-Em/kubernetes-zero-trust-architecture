@@ -1,0 +1,7 @@
+2026-11-06T22:46:41.084930387Z	Warning	ZT Shell spawned in app container	zt-frontend	frontend-5d9d6df54-tkphc
+2026-11-06T22:46:43.148399399Z	Warning	ZT Shell spawned in app container	zt-data	database-55f4778c8d-wwt6l
+2026-11-06T22:46:45.232410853Z	Notice	ZT Outbound connection from data tier	zt-data	database-55f4778c8d-wwt6l
+2026-11-06T22:46:45.825602988Z	Critical	ZT Interactive access to secrets tooling	vault	vault-0
+2026-11-06T22:46:45.871564094Z	Critical	ZT Read of Vault storage by non-vault process	vault	vault-0
+2026-11-06T22:46:48.087104308Z	Warning	ZT Shell spawned in app container	zt-attacker	falco-token-test
+2026-11-06T22:46:54.287983684Z	Warning	ZT Read of service account token	zt-attacker	falco-token-test
