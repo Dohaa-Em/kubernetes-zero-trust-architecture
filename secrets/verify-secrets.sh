@@ -18,7 +18,7 @@ kubectl -n zt-data get secretstore,externalsecret
 echo '```'
 echo "- Secret db-creds possédé par : $(kubectl -n zt-data get secret db-creds \
   -o jsonpath='{.metadata.ownerReferences[0].kind}/{.metadata.ownerReferences[0].name}')"
-echo "- Mot de passe présent dans le dépôt Git : $(git grep -nIi 'POSTGRES_PASSWORD.*value:' -- . ':!docs' | wc -l) occurrence(s)"
+echo "- Mot de passe présent dans le dépôt Git : $(git grep -nIi 'POSTGRES_PASSWORD.*value:' -- . ':!docs' ':!secrets/verify-secrets.sh' | wc -l) occurrence(s)"
 echo
 echo "## Qui peut lire secret/zt/database/credentials dans Vault ?"
 DEF=$(vxtok "$ROOT_TOKEN" token create -policy=default -ttl=5m -field=token </dev/null)

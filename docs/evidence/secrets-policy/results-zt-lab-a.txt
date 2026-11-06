@@ -1,0 +1,12 @@
+=== Secrets only from ESO - zt-lab-a - 2026-11-07T00:11:34+02:00
+--- 1. Creation manuelle (doit etre refusee) :
+error: failed to create secret admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Secret/zt-data/manual-test was blocked due to the following policies 
+
+secrets-only-from-eso:
+  deny-secrets-not-written-by-eso: Secrets in zt-data may only be written by the External Secrets Operator.
+--- 2. ESO continue de synchroniser (doit rester SecretSynced) :
+externalsecret.external-secrets.io/db-creds annotated
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    8s

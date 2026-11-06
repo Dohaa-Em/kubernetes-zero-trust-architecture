@@ -1,16 +1,16 @@
 # Mesure : secrets (Vault + ESO)
-Date : 2026-11-07T00:10:31+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64
+Date : 2026-11-07T00:12:39+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64
 
 ## État de la synchronisation
 ```
 NAME                                    AGE   STATUS   CAPABILITIES   READY
-secretstore.external-secrets.io/vault   10m   Valid    ReadWrite      True
+secretstore.external-secrets.io/vault   12m   Valid    ReadWrite      True
 
 NAME                                          STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
-externalsecret.external-secrets.io/db-creds   SecretStore   vault   1m                 SecretSynced   True    51s
+externalsecret.external-secrets.io/db-creds   SecretStore   vault   1m                 SecretSynced   True    4s
 ```
 - Secret db-creds possédé par : ExternalSecret/db-creds
-- Mot de passe présent dans le dépôt Git : 1 occurrence(s)
+- Mot de passe présent dans le dépôt Git : 0 occurrence(s)
 
 ## Qui peut lire secret/zt/database/credentials dans Vault ?
 - Token Vault sans politique (default) : refusé
