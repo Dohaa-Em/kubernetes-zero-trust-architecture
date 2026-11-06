@@ -1,0 +1,118 @@
+# detection/falco-values.yaml  (chart falcosecurity/falco 9.x, Falco 0.44.x)
+# Avant d'installer, vérifier les clés sur la version épinglée :
+#   helm show values falcosecurity/falco --version <V> | less
+driver:
+  kind: modern_ebpf          # pas de module noyau à compiler (noyau >= 5.8 avec BTF)
+
+tty: true                    # alertes affichées sans délai dans les logs
+
+# Socket du runtime : valeurs par défaut du chart 9.x (le moteur cri cherche déjà /run/k3s/containerd/containerd.sock).
+
+falco:
+  json_output: true
+  json_include_output_property: true
+  priority: notice
+
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits:   {cpu: 1000m, memory: 1024Mi}
+
+falcosidekick:
+  enabled: true
+  replicaCount: 1            # 1 seul réplica : économise la RAM du lab
+  webui:
+    enabled: true            # interface sur le port 2802, stockage Redis
+    replicaCount: 1
+  # Option "canal de notification" : décommenter et mettre une URL de webhook
+  # (ex. https://webhook.site/<id>) -- ne jamais commit une URL contenant un jeton.
+  # config:
+  #   webhook:
+  #     address: ""
+  #     minimumpriority: warning
+
+customRules:
+  zt-rules.yaml: |-
+    - list: zt_app_namespaces
+      items: [zt-frontend, zt-api, zt-data, zt-attacker]
+
+    - list: zt_tool_namespaces
+      items: [vault, external-secrets]
+
+    - list: zt_shells
+      items: [sh, bash, ash, dash, zsh, ksh]
+
+    # Exception documentée : la sonde readiness du chart Vault lance
+    # "sh -ec vault status" toutes les 5 s. Limite : un attaquant qui glisse
+    # "vault status" dans sa commande échappe à la règle.
+    - macro: zt_vault_probe
+      condition: (k8s.ns.name = vault and proc.cmdline contains "vault status")
+
+    # S1 -- un attaquant obtient un shell dans un pod applicatif
+    - rule: ZT Shell spawned in app container
+      desc: Shell interactif ou commande via sh dans un namespace applicatif zero trust
+      condition: >
+        spawned_process and container
+        and proc.name in (zt_shells)
+        and k8s.ns.name in (zt_app_namespaces)
+        and not proc.cmdline contains "docker-entrypoint"
+      output: >
+        ZT shell in app container (ns=%k8s.ns.name pod=%k8s.pod.name user=%user.name
+        cmd=%proc.cmdline parent=%proc.pname image=%container.image.repository)
+      priority: WARNING
+      tags: [zt, container, shell, mitre_execution, T1059]
+
+    # S2 -- vol du token de ServiceAccount
+    - rule: ZT Read of service account token
+      desc: Un processus lit le token du ServiceAccount monté dans le pod
+      condition: >
+        open_read and container
+        and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/
+        and k8s.ns.name in (zt_app_namespaces)
+      output: >
+        ZT SA token read (ns=%k8s.ns.name pod=%k8s.pod.name proc=%proc.name
+        cmd=%proc.cmdline file=%fd.name)
+      priority: WARNING
+      tags: [zt, credential_access, mitre_credential_access, T1528]
+
+    # S1/S4 -- la base de données tente de sortir du cluster (exfiltration)
+    # Le macro "outbound" de Falco ignore les connexions échouées et les IP
+    # privées : on écrit notre propre condition pour voir aussi les tentatives
+    # bloquées par les NetworkPolicy (détection + prévention = défense en profondeur).
+    - rule: ZT Outbound connection from data tier
+      desc: Le pod de base de données ouvre une connexion hors du réseau des pods/services
+      condition: >
+        evt.type = connect and container
+        and k8s.ns.name = zt-data
+        and fd.typechar = 4
+        and not fd.snet in ("10.42.0.0/16", "10.43.0.0/16", "127.0.0.0/8")
+      output: >
+        ZT outbound from data tier (pod=%k8s.pod.name proc=%proc.name
+        dest=%fd.sip:%fd.sport res=%evt.res)
+      priority: NOTICE
+      tags: [zt, network, mitre_exfiltration, T1041]
+
+    # S4 -- accès interactif à Vault / ESO (vol des identifiants de Vault)
+    - rule: ZT Interactive access to secrets tooling
+      desc: Shell lancé dans Vault ou External Secrets Operator
+      condition: >
+        spawned_process and container
+        and proc.name in (zt_shells)
+        and k8s.ns.name in (zt_tool_namespaces)
+        and not zt_vault_probe
+      output: >
+        ZT shell in secrets tooling (ns=%k8s.ns.name pod=%k8s.pod.name
+        user=%user.name cmd=%proc.cmdline)
+      priority: CRITICAL
+      tags: [zt, credential_access, mitre_credential_access, T1552]
+
+    - rule: ZT Read of Vault storage by non-vault process
+      desc: Lecture directe des données Raft de Vault par un autre processus que vault
+      condition: >
+        open_read and container
+        and k8s.ns.name = vault
+        and fd.name startswith /vault/data
+        and not proc.name = vault
+      output: >
+        ZT Vault storage read (pod=%k8s.pod.name proc=%proc.name file=%fd.name)
+      priority: CRITICAL
+      tags: [zt, credential_access, mitre_credential_access, T1552.001]

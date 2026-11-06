@@ -14,8 +14,8 @@ Les deux membres installent exactement ces versions. Toujours donner la version 
 | Kyverno | chart 3.9.2 | application v1.19.2 |
 | Kyverno CLI | 1.19.2 | tests dans `admission/tests` |
 | Gitleaks | 8.30.1 | hook pre-commit |
-| Falco | à renseigner (Doha) | |
-| Falcosidekick | à renseigner (Doha) | |
+| Falco | chart 9.2.2 | application 0.45.2, pilote modern_ebpf |
+| Falcosidekick | 2.35.1 | interface 2.2.0, 1 réplica |
 | Vault | chart 0.34.1 | application 2.0.4, Raft, 1 réplica |
 | External Secrets Operator | chart 2.14.0 | API external-secrets.io/v1 |
 | kube-bench | à renseigner (Doha) | |

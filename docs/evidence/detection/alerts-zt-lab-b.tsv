@@ -1,0 +1,11 @@
+2026-11-06T19:36:09.810267062Z	Warning	ZT Shell spawned in app container	zt-frontend	frontend-58d99b4d48-hzvxd
+2026-11-06T19:36:11.573241971Z	Warning	ZT Shell spawned in app container	zt-attacker	falco-token-test
+2026-11-06T19:36:16.577051111Z	Warning	ZT Read of service account token	zt-attacker	falco-token-test
+2026-11-06T19:36:35.203153807Z	Warning	ZT Shell spawned in app container	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.294904301Z	Notice	ZT Outbound connection from data tier	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.412059943Z	Notice	ZT Outbound connection from data tier	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.600085473Z	Notice	ZT Outbound connection from data tier	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.600111271Z	Notice	ZT Outbound connection from data tier	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.657492402Z	Notice	ZT Outbound connection from data tier	zt-data	database-ccd7b6d85-f5rsw
+2026-11-06T19:36:35.977683387Z	Critical	ZT Interactive access to secrets tooling	vault	vault-0
+2026-11-06T19:36:35.978752160Z	Critical	ZT Read of Vault storage by non-vault process	vault	vault-0
