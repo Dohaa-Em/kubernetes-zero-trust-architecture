@@ -1,21 +1,20 @@
-=== Network policies vault/eso/falco - zt-lab-a - 2026-11-07T00:51:30+02:00
+=== Network policies vault/eso/falco - zt-lab-a - 2026-11-07T01:07:56+02:00
 --- 1. ESO synchronise toujours (V1 a V3) :
 externalsecret.external-secrets.io/db-creds annotated
 NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
-db-creds   SecretStore   vault   1m                 SecretSynced   True    13s
+db-creds   SecretStore   vault   1m                 SecretSynced   True    12s
 --- 2. Pod attaquant -> Vault (doit etre bloque) :
 http=000
 command terminated with exit code 28
 code=28
---- 3. Redemarrage de Falco sous default deny (doit revenir 2/2) :
-pod "falco-ct6xd" deleted
-NAME                                      READY   STATUS       RESTARTS      AGE
-falco-falcosidekick-698768f6cf-lcwq5      1/1     Running      0             40m
-falco-falcosidekick-ui-6dbdb8b4b5-rzb9x   1/1     Running      0             40m
-falco-falcosidekick-ui-redis-0            1/1     Running      0             40m
-falco-gr9bc                               0/2     Init:Error   1 (45s ago)   90s
---- 4. Une alerte arrive-t-elle encore dans Falcosidekick ? :
-2026/11/06 22:46:45 [INFO]  : WebUI - POST OK (200)
+--- 3. Falco redemarre sous default deny (doit etre 2/2 Running) :
+NAME                                      READY   STATUS     RESTARTS   AGE
+falco-falcosidekick-698768f6cf-lcwq5      1/1     Running    0          55m
+falco-falcosidekick-ui-6dbdb8b4b5-rzb9x   1/1     Running    0          55m
+falco-falcosidekick-ui-redis-0            1/1     Running    0          55m
+falco-pdzl5                               0/2     Init:0/1   0          5m22s
+--- 4. Une NOUVELLE alerte arrive dans Falcosidekick :
+maintenant (UTC) : 23:08:28
 2026/11/06 22:46:45 [INFO]  : WebUI - POST OK (200)
 2026/11/06 22:46:45 [INFO]  : WebUI - POST OK (200)
 2026/11/06 22:46:48 [INFO]  : WebUI - POST OK (200)

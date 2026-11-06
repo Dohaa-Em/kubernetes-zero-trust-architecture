@@ -94,11 +94,10 @@ spec:
       ports:
         - {protocol: TCP, port: 6379}
 ---
-# F4 + F5 : DNS (via le proxy DNS de Cilium) et téléchargement des règles Falco.
-# Une règle NetworkPolicy DNS classique ne doit PAS coexister ici : elle contournerait le proxy.
+# F5 : DNS pour tous les pods du namespace falco
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata: {name: allow-dns-and-falco-rules-download, namespace: falco}
+metadata: {name: allow-dns-egress, namespace: falco}
 spec:
   endpointSelector: {}
   egress:
@@ -110,13 +109,18 @@ spec:
         - ports:
             - {port: "53", protocol: UDP}
             - {port: "53", protocol: TCP}
-          rules:
-            dns:
-              - matchPattern: "*"
-    - toFQDNs:
-        - matchName: ghcr.io
-        - matchName: pkg-containers.githubusercontent.com
-        - matchName: falcosecurity.github.io
+---
+# F4 : téléchargement des règles et du plugin par falcoctl (index sur falcosecurity.github.io,
+# artefacts sur ghcr.io, blobs redirigés vers des CDN dont les adresses changent).
+# Limite assumée : HTTPS sortant ouvert pour le seul pod Falco, pas de filtre par nom de domaine.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: allow-falco-rules-download, namespace: falco}
+spec:
+  endpointSelector:
+    matchLabels: {app.kubernetes.io/name: falco}
+  egress:
+    - toEntities: [world]
       toPorts:
         - ports:
             - {port: "443", protocol: TCP}
