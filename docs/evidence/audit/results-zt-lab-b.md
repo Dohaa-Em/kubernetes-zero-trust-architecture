@@ -9,3 +9,9 @@
 {"t":"2026-11-06T18:58:28.348616Z","user":"system:admin","as":"system:serviceaccount:zt-frontend:sa-frontend","verb":"get","code":403}
 ## le mot de passe apparaît-il dans le journal ? (attendu : 0)
 0
+
+## création et suppression d'un pod (S3 : qui a déployé quoi)
+{"t":"2026-11-06T19:36:09.999363Z","user":"system:admin","verb":"create","ns":"zt-attacker","pod":"falco-token-test","code":201,"sa":"sa-attacker","image":"curlimages/curl:8.10.1"}
+{"t":"2026-11-06T19:36:10.005094Z","user":"system:kube-scheduler","verb":"create","ns":"zt-attacker","pod":"falco-token-test","code":201,"sa":null,"image":null}
+{"t":"2026-11-06T19:36:36.113847Z","user":"system:admin","verb":"delete","ns":"zt-attacker","pod":"falco-token-test","code":200,"sa":null,"image":null}
+{"t":"2026-11-06T19:36:47.622946Z","user":"system:node:zt-lab-b","verb":"delete","ns":"zt-attacker","pod":"falco-token-test","code":200,"sa":null,"image":null}
