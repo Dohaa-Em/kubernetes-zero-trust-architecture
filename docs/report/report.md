@@ -411,12 +411,12 @@ what the previous layers already do, and accepted with the attack surface it add
 | --- | --- | --- | --- | --- | --- |
 | RBAC + no token (native) | S2/S4: 96 → 23 rules, no secret access | nothing, first layer | none | none | n/a |
 | NetworkPolicy (native) | S1: 4 reachable targets → 1 | nothing at L3/L4 | none | none (needs a CNI) | depends on the CNI |
-| Cilium + Hubble | Enforces NetworkPolicy; adds L7 and flow visibility | partly (L3/L4 by any CNI) | privileged eBPF agent | memory, complexity | no pod networking |
+| Cilium + Hubble | Enforces NetworkPolicy; adds L7 and flow visibility | partly (L3/L4 by any CNI) | privileged eBPF agent | 303 MiB, 54 m CPU | no pod networking |
 | PSA (native) | S3: privileged/hostPath rejected | nothing | none | none | n/a, built into the API server |
 | Kyverno | What PSA cannot express (tags, limits, images, generated default deny) | partly (S3 already by PSA) | admission webhook with cluster-wide rights | memory, policy maintenance | fail-open or fail-closed (TODO A) |
-| Vault + ESO | S4: secret owned, versioned, rotated, unusable with a stolen token | partly (RBAC already hides it) | Vault, unseal key, ESO controller | 2 components to operate | Vault sealed: no new sync, existing Secrets kept |
+| Vault + ESO | S4: secret owned, versioned, rotated, unusable with a stolen token | partly (RBAC already hides it) | Vault, unseal key, ESO controller | 170 MiB, 38 m CPU | Vault sealed: no new sync, existing Secrets kept |
 | Audit + encryption at rest (native k3s) | Traceability; S4 from a stolen backup | nothing | log volume, key on node | disk | loss of traceability; key loss = unreadable Secrets |
-| Falco | Visibility of S1, S2 and S4 attempts, even when blocked | nothing (detection) | privileged pod, kernel access | ≈ RAM and CPU per node (TODO phase 8) | silent blind spot |
+| Falco | Visibility of S1, S2 and S4 attempts, even when blocked | nothing (detection) | privileged pod, kernel access | 116 MiB, 29 m CPU | silent blind spot |
 
 **Where we deliberately did not add more.** Cilium L7 rules are kept as a demonstration
 instead of covering every flow, because NetworkPolicy already closes S1 and L7 would tie
@@ -424,7 +424,21 @@ every manifest to Cilium. Kyverno does not duplicate the PSA rules. There is no 
 mesh, because its main benefit (mTLS) is not measured by our scenarios and Cilium can
 provide transparent encryption more cheaply.
 
-> **TODO (phase 8):** memory and CPU cost of each tool from `kubectl top pods -A`.
+Measured on `zt-lab-b` with `kubectl top pods -A` (6 November 2026, idle lab, all pods of each tool added up):
+
+| Tool | Pods | CPU | Memory |
+| --- | --- | --- | --- |
+| Application (frontend, API, database) | 3 | 6 m | 35 MiB |
+| Cilium + Hubble (agent, Envoy, operator, relay, UI) | 5 | 54 m | 303 MiB |
+| External Secrets Operator (controller, webhook, cert-controller) | 3 | 6 m | 124 MiB |
+| Vault | 1 | 32 m | 46 MiB |
+| Falco + Falcosidekick + UI + Redis | 4 | 29 m | 116 MiB |
+| Kyverno | | | TODO (A, measured on `zt-lab-a`) |
+
+The security tooling uses **about 17 times more memory than the application it
+protects** (≈ 590 MiB against 35 MiB, without Kyverno). On a real cluster this cost is shared by many
+applications, but it confirms that each tool must earn its place: Cilium is the most
+expensive, and it is also the one that enforces every network control.
 
 ## 11. Reproducibility
 
