@@ -5,7 +5,7 @@ Les deux membres installent exactement ces versions. À remplir au début de la 
 | Outil | Version | Noyau / remarque |
 | --- | --- | --- |
 | Système, Abir Majdi (zt-lab-a) | Debian 13 | |
-| Système, Doha (zt-lab-b) | Ubuntu LTS | |
+| Système, Doha (zt-lab-b) | Ubuntu 24.04 | noyau 6.14.0-35-generic, k3s v1.36.5+k3s1, Cilium 1.20.4 |
 | k3s | | |
 | Cilium | | |
 | Hubble | | |
