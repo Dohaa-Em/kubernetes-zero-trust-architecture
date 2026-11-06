@@ -1,0 +1,29 @@
+=== Tool versions - zt-lab-a - 2026-11-06T17:06:06+02:00
+kubectl:   gitVersion: v1.31.14
+git: git version 2.47.3
+gh: gh version 2.46.0 (2025-01-13 Debian 2.46.0-3)
+k3s: k3s version v1.36.5+k3s1 (3dd98cc5)
+cilium: cilium-cli: v0.20.2 compiled with go1.27.3 on linux/amd64 cilium image (default): v1.20.3 cilium image (stable): v1.20.4 cilium image (running): 1.20.4 
+hubble: hubble v1.20.2@HEAD-90adec1 compiled with go1.27.1 on linux/amd64
+helm: v3.22.1+gd6c1a0e
+kyverno cli: Version: 1.19.2
+gitleaks: 8.30.1
+--- images:
+kube-system quay.io/cilium/cilium-envoy:v1.39.5-1792733054-8c73b2816bc8239e27f1fd53b271884688137459@sha256:547ab45f6092f681d9f54f3be9fa8fb1e705c9c5dc2df388efe3a52aa6965629 
+kube-system quay.io/cilium/cilium:v1.20.4@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e 
+kube-system quay.io/cilium/hubble-relay:v1.20.4@sha256:cb23408209697ed30d2bc462e1f01eb622ea4423a891458f78bc88d7255bbfc1 
+kube-system quay.io/cilium/hubble-ui:v0.13.6@sha256:049a80a03585c043d0c3121bdc518c72b0fd42bae07e4bcce0fdb8f1e88041d0 quay.io/cilium/hubble-ui-backend:v0.13.6@sha256:83b3fc763f3d49948c306bf49b08277383e195904b9ca5c0c0022b2112628787 
+kube-system quay.io/cilium/operator-generic:v1.20.4@sha256:7a7a3489dc66ad67e420d285c8a8d2e169b0957ad15e120f593d27081bf38d82 
+kube-system rancher/local-path-provisioner:v0.0.37 
+kube-system rancher/mirrored-coredns-coredns:1.14.7 
+kube-system rancher/mirrored-metrics-server:v0.9.0 
+kyverno reg.kyverno.io/kyverno/background-controller:v1.19.2 
+kyverno reg.kyverno.io/kyverno/cleanup-controller:v1.19.2 
+kyverno reg.kyverno.io/kyverno/kyverno-cli:v1.19.2 
+kyverno reg.kyverno.io/kyverno/kyverno:v1.19.2 
+kyverno reg.kyverno.io/kyverno/reports-controller:v1.19.2 
+tp6-secure tp6-web:local 
+zt-api ghcr.io/stefanprodan/podinfo:6.7.1 
+zt-attacker curlimages/curl:8.10.1 
+zt-data postgres:16-alpine 
+zt-frontend nginxinc/nginx-unprivileged:1.27-alpine 
