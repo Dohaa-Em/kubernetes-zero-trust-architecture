@@ -40,4 +40,6 @@ components are defined in [`docs/01-interface-contract.md`](docs/01-interface-co
 - [Test sheet](docs/02-test-sheet.md)
 
 ## Status
-Phases 0 to 4 done by Abir Majdi (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno). Vault, External Secrets and Falco in progress (Doha El Merabet).
+- Phases 0 to 4 done by Abir Majdi on zt-lab-a (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno).
+- Phases 5 and 6 done by Doha El Merabet on zt-lab-b (Vault, External Secrets, API audit, etcd encryption, Falco).
+- Integration (phase 7), in progress on zt-lab-a by Abir Majdi: API audit, etcd encryption, Vault and External Secrets replayed with evidence. Next: secrets policy, Falco, network policies for the new namespaces.

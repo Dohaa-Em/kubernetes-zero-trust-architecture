@@ -1,13 +1,13 @@
 # Mesure : secrets (Vault + ESO)
-Date : 2026-11-07T00:03:26+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64
+Date : 2026-11-07T00:10:31+02:00 | Machine : zt-lab-a | Noyau : 6.12.111+deb13-amd64
 
 ## État de la synchronisation
 ```
-NAME                                    AGE     STATUS   CAPABILITIES   READY
-secretstore.external-secrets.io/vault   3m14s   Valid    ReadWrite      True
+NAME                                    AGE   STATUS   CAPABILITIES   READY
+secretstore.external-secrets.io/vault   10m   Valid    ReadWrite      True
 
 NAME                                          STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
-externalsecret.external-secrets.io/db-creds   SecretStore   vault   1m                 SecretSynced   True    4s
+externalsecret.external-secrets.io/db-creds   SecretStore   vault   1m                 SecretSynced   True    51s
 ```
 - Secret db-creds possédé par : ExternalSecret/db-creds
 - Mot de passe présent dans le dépôt Git : 1 occurrence(s)
