@@ -42,4 +42,4 @@ components are defined in [`docs/01-interface-contract.md`](docs/01-interface-co
 ## Status
 - Phases 0 to 4 done by Abir Majdi on zt-lab-a (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno).
 - Phases 5 and 6 done by Doha El Merabet on zt-lab-b (Vault, External Secrets, API audit, etcd encryption, Falco).
-- Integration (phase 7), in progress on zt-lab-a by Abir Majdi: API audit, etcd encryption, Vault and External Secrets replayed with evidence. Kyverno policy allowing Secrets in zt-data only from External Secrets Operator (admission/70). Falco with five MITRE-tagged rules replayed with evidence (docs/evidence/detection). Next: network policies for the new namespaces.
+- Integration (phase 7), in progress on zt-lab-a by Abir Majdi: API audit, etcd encryption, Vault and External Secrets replayed with evidence. Kyverno policy allowing Secrets in zt-data only from External Secrets Operator (admission/70). Falco with five MITRE-tagged rules replayed with evidence (docs/evidence/detection). Network policies for vault, external-secrets and falco applied (network/40, network/50). Next: S1-S4 replay on both clusters.

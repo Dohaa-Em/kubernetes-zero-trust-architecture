@@ -1,0 +1,122 @@
+# Flux de Falco et Falcosidekick (docs/flows-falco.md, F1 à F5)
+# Les pods se distinguent par app.kubernetes.io/component : core, ui, ui-redis.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-all, namespace: falco}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+# F1 : Falco -> Falcosidekick 2801
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-falco-to-sidekick-egress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falco}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: core}
+      ports:
+        - {protocol: TCP, port: 2801}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-falco-to-sidekick-ingress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: core}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falco}
+      ports:
+        - {protocol: TCP, port: 2801}
+---
+# F2 : Falcosidekick -> interface 2802
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-sidekick-to-ui-egress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: core}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui}
+      ports:
+        - {protocol: TCP, port: 2802}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-sidekick-to-ui-ingress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: core}
+      ports:
+        - {protocol: TCP, port: 2802}
+---
+# F3 : interface -> Redis 6379
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-ui-to-redis-egress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui-redis}
+      ports:
+        - {protocol: TCP, port: 6379}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-ui-to-redis-ingress, namespace: falco}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui-redis}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: falcosidekick, app.kubernetes.io/component: ui}
+      ports:
+        - {protocol: TCP, port: 6379}
+---
+# F4 + F5 : DNS (via le proxy DNS de Cilium) et téléchargement des règles Falco.
+# Une règle NetworkPolicy DNS classique ne doit PAS coexister ici : elle contournerait le proxy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: allow-dns-and-falco-rules-download, namespace: falco}
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - {port: "53", protocol: UDP}
+            - {port: "53", protocol: TCP}
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toFQDNs:
+        - matchName: ghcr.io
+        - matchName: pkg-containers.githubusercontent.com
+        - matchName: falcosecurity.github.io
+      toPorts:
+        - ports:
+            - {port: "443", protocol: TCP}

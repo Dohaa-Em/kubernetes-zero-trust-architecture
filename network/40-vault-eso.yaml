@@ -1,0 +1,120 @@
+# Flux de Vault et External Secrets Operator (docs/flows-vault-eso.md, V1 à V6)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-all, namespace: vault}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-all, namespace: external-secrets}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+# V6 : DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns-egress, namespace: vault}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns-egress, namespace: external-secrets}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+---
+# V1 : ESO -> Vault 8200 (egress côté ESO, ingress côté Vault)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-eso-to-vault-egress, namespace: external-secrets}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: external-secrets}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: vault}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: vault}
+      ports:
+        - {protocol: TCP, port: 8200}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-eso-to-vault-ingress, namespace: vault}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: vault}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: external-secrets}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: external-secrets}
+      ports:
+        - {protocol: TCP, port: 8200}
+---
+# V2 et V3 : contrôleur ESO et cert-controller -> API Kubernetes
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: allow-eso-to-kube-apiserver, namespace: external-secrets}
+spec:
+  endpointSelector:
+    matchExpressions:
+      - {key: app.kubernetes.io/name, operator: In, values: [external-secrets, external-secrets-cert-controller]}
+  egress:
+    - toEntities: [kube-apiserver]
+      toPorts:
+        - ports:
+            - {port: "6443", protocol: TCP}
+---
+# V4 : API Kubernetes -> webhook ESO 10250
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: allow-kube-apiserver-to-eso-webhook, namespace: external-secrets}
+spec:
+  endpointSelector:
+    matchLabels: {app.kubernetes.io/name: external-secrets-webhook}
+  ingress:
+    - fromEntities: [kube-apiserver]
+      toPorts:
+        - ports:
+            - {port: "10250", protocol: TCP}
+---
+# V5 : Vault -> API Kubernetes (TokenReview, service_registration)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: allow-vault-to-kube-apiserver, namespace: vault}
+spec:
+  endpointSelector:
+    matchLabels: {app.kubernetes.io/name: vault}
+  egress:
+    - toEntities: [kube-apiserver]
+      toPorts:
+        - ports:
+            - {port: "6443", protocol: TCP}
