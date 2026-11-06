@@ -1,0 +1,10 @@
+# cluster/audit/k3s-audit.yaml
+# Fichier "drop-in" k3s, copié dans /etc/rancher/k3s/config.yaml.d/20-audit.yaml
+# Avantage : on ne modifie pas cluster/k3s-config.yaml (fichier commun) et le
+# suffixe "+" AJOUTE les arguments à ceux qui existeraient déjà au lieu de les écraser.
+kube-apiserver-arg+:
+  - "audit-log-path=/var/lib/rancher/k3s/server/logs/audit.log"
+  - "audit-policy-file=/var/lib/rancher/k3s/server/audit-policy.yaml"
+  - "audit-log-maxage=7"
+  - "audit-log-maxbackup=3"
+  - "audit-log-maxsize=50"

@@ -1,0 +1,53 @@
+# cluster/audit/audit-policy.yaml
+# Copié dans /var/lib/rancher/k3s/server/audit-policy.yaml
+# La première règle qui correspond s'applique : l'ordre compte.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages: ["RequestReceived"]
+rules:
+  # --- Bruit inutile ---------------------------------------------------------
+  - level: None
+    users: ["system:kube-proxy"]
+  - level: None
+    resources:
+      - group: ""
+        resources: ["events"]
+      - group: "coordination.k8s.io"
+        resources: ["leases"]
+      - group: "wgpolicyk8s.io"          # PolicyReports de Kyverno (mises à jour en continu)
+  - level: None
+    nonResourceURLs: ["/healthz*", "/readyz*", "/livez*", "/version", "/metrics"]
+
+  # --- Données sensibles : métadonnées UNIQUEMENT -----------------------------
+  # Journaliser le corps d'une requête sur un Secret recopierait le secret en
+  # clair dans le fichier d'audit. On garde : qui, quoi, quand, réponse.
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["secrets", "configmaps", "serviceaccounts/token"]
+      - group: "external-secrets.io"
+
+  # --- Entrée dans un conteneur (S1) ------------------------------------------
+  # L'URL de la requête contient la commande exécutée (?command=sh...).
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["pods/exec", "pods/attach", "pods/portforward", "pods/ephemeralcontainers"]
+
+  # --- Modifications de sécurité : corps complet -------------------------------
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete", "deletecollection"]
+    resources:
+      - group: ""
+        resources: ["pods", "serviceaccounts", "namespaces"]
+      - group: "rbac.authorization.k8s.io"
+      - group: "networking.k8s.io"
+        resources: ["networkpolicies"]
+      - group: "cilium.io"
+        resources: ["ciliumnetworkpolicies", "ciliumclusterwidenetworkpolicies"]
+      - group: "kyverno.io"
+        resources: ["clusterpolicies", "policies", "policyexceptions"]
+      - group: "admissionregistration.k8s.io"
+
+  # --- Tout le reste : métadonnées --------------------------------------------
+  - level: Metadata
