@@ -16,8 +16,8 @@ Les deux membres installent exactement ces versions. Toujours donner la version 
 | Gitleaks | 8.30.1 | hook pre-commit |
 | Falco | à renseigner (Doha) | |
 | Falcosidekick | à renseigner (Doha) | |
-| Vault | à renseigner (Doha) | |
-| External Secrets Operator | à renseigner (Doha) | |
+| Vault | chart 0.34.1 | application 2.0.4, Raft, 1 réplica |
+| External Secrets Operator | chart 2.14.0 | API external-secrets.io/v1 |
 | kube-bench | à renseigner (Doha) | |
 
 ## Machines
