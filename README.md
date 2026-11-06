@@ -40,4 +40,4 @@ components are defined in [`docs/01-interface-contract.md`](docs/01-interface-co
 - [Test sheet](docs/02-test-sheet.md)
 
 ## Status
-Phases 0 to 4 done by Abir Majdi (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno). Vault, External Secrets and Falco in progress (Doha Em).
+Phases 0 to 4 done by Abir Majdi (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno). Vault, External Secrets and Falco in progress (Doha El Merabet).
