@@ -1,0 +1,19 @@
+=== Retest des correctifs d'Abir sur zt-lab-b - 2026-11-07T21:23:33+01:00 - commit 079700d
+--- R1 : image interdite en initContainer (doit maintenant etre REFUSEE) :
+best-practices-require-limits:
+  require-cpu-memory-limits: 'validation error: CPU and memory limits are required. rule require-cpu-memory-limits failed at path /spec/initContainers/0/resources/limits/'
+supply-chain-restrict-images:
+  allowed-images-only: 'validation error: Image not in the project allowlist. rule allowed-images-only failed at path /spec/initContainers/0/image/'
+--- R10 : modification de db-creds par l'administrateur (doit etre REFUSEE) :
+secrets-only-from-eso:
+  deny-secrets-not-written-by-eso: Secrets in zt-data may only be written by the External Secrets Operator.
+--- R10 : ESO ecrit toujours (rotation complete) :
+1. PostgreSQL : mot de passe changé
+2. Vault : nouvelle version écrite
+3. ESO : Secret synchronisé en 0s
+4. Connexion TCP avec le mot de passe venant de Vault/ESO : OK
+code de sortie : 0
+--- C-0013 : runAsGroup des pods applicatifs :
+zt-frontend deploy/frontend : 101
+zt-api deploy/api : 100
+zt-attacker pod/attacker : 100

@@ -1,5 +1,5 @@
 # Mesure : integration
-Date : 2026-11-07T19:20:35+01:00 | Machine : zt-lab-b | Noyau : 6.14.0-35-generic | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
+Date : 2026-11-07T21:23:40+01:00 | Machine : zt-lab-b | Noyau : 6.14.0-35-generic | k3s : k3s version v1.36.5+k3s1 (3dd98cc5)
 
 ## S1 : depuis le pod frontal compromis
 | Cible | Résultat |
