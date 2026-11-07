@@ -23,6 +23,9 @@ falcosidekick:
   webui:
     enabled: true            # interface sur le port 2802, stockage Redis
     replicaCount: 1
+    # Identifiant de l'interface lu dans un Secret créé à la main (hors Git) au lieu
+    # de la valeur par défaut "admin:admin". Création : voir docs/report, section 4.6.3.
+    existingSecret: falcosidekick-ui-credentials
   # Option "canal de notification" : décommenter et mettre une URL de webhook
   # (ex. https://webhook.site/<id>) -- ne jamais commit une URL contenant un jeton.
   # config:
