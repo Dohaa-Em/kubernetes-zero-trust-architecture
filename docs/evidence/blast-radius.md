@@ -5,3 +5,4 @@
 | network | ATTEIGNABLE | bloqué | bloqué | bloqué | no | no | ACCEPTÉ | non |
 | admission-psa | ATTEIGNABLE | bloqué | bloqué | bloqué | no | no | REFUSÉ | non |
 | admission-kyverno | ATTEIGNABLE | bloqué | bloqué | bloqué | no | no | REFUSÉ | non |
+| integration (+ Vault/ESO + Falco) | ATTEIGNABLE | bloqué | bloqué | bloqué | no | no | REFUSÉ | non |
