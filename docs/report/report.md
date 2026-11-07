@@ -256,13 +256,13 @@ Vault is unsealed, a forced sync brings the ExternalSecret back to `SecretSynced
 | Network flow from workloads to Vault | n/a | yes, from every pod | **no**, only the ESO controller |
 | Rotation and history | manual, none | yes | yes (KV versions + refresh) |
 | Extra components | none | injector webhook + one sidecar per pod | one operator |
-| Main risk | anyone with `get secrets` | injector webhook, many Vault clients | ESO controller can write Secrets cluster-wide |
+| Main risk | anyone with `get secrets` | injector webhook, many Vault clients | ESO controller can read and write the Secrets of its namespace |
 
 **Limits.**
 - The final Secret still lives in the cluster datastore (SQLite on single-node k3s, not etcd). Its protection depends on RBAC and on encryption at rest (4.6).
-- The ESO controller's ClusterRole allows reading and writing Secrets in every namespace: compromising ESO is equivalent to compromising every synchronised secret. Scoping it (`scopedNamespace`/`scopedRBAC`) is an improvement.
+- The ESO controller is scoped to `zt-data` (`scopedRBAC`, `scopedNamespace`, `processCluster*` disabled), a change made after A's cross-review (A1). Its access to Secrets in `kube-system`, `vault` and `zt-api` went from `yes` to `no` on both clusters (`docs/evidence/secrets-policy/eso-scoped-rbac-zt-lab-a.txt`, `docs/evidence/review/retest-a1-a2-zt-lab-b.txt`). It can still read and write every Secret of `zt-data`: compromising ESO still exposes `db-creds`.
 - Running pods keep the old password in their environment until restarted. Application-side reloading, or Vault dynamic database credentials, would close this gap.
-- Lab shortcuts: TLS disabled inside the cluster, a single unseal key, a single replica, the root token kept on the admin machine.
+- Lab shortcuts: TLS disabled inside the cluster, a single unseal key, a single replica, the root token kept on the admin machine and used by the scripts, and **no auto-unseal**. On `zt-lab-a`, after a restart of the Vault pod, Vault stayed sealed and ESO stayed in `SecretSyncedError` for about 160 minutes until a manual unseal; the application kept working with the last value.
 - Closing the chain (issue #16): A added `admission/70-secrets-only-from-eso.yaml`, which rejects any Secret in `zt-data` not written by the ESO controller, and default-deny NetworkPolicy for `vault` and `external-secrets` (`network/40-vault-eso.yaml`). On `zt-lab-b`, ESO still syncs through these policies and the attacker pod can no longer reach Vault (`docs/evidence/network-vault-falco/results-zt-lab-b.txt`).
 
 ### 4.6 Traceability and detection: audit, encryption at rest, Falco (B)
@@ -349,6 +349,8 @@ and pod after the change.
 
 **Limits.**
 - Falco detects but **does not block**. It complements prevention, it does not replace it.
+- The shell rule watches shell names only: `curl`, `wget` or `nc` run directly through `kubectl exec` raise no Falco alert. The audit log still records every `exec` with its command (A3).
+- The shell rule first excluded any command containing `docker-entrypoint`, so an attacker could evade it by writing that string into his own command (A2, found by A). The exclusion is now anchored at the start of the command line: the bypass alerts and container starts stay silent on both clusters (`docs/evidence/review/retest-a1-a2-zt-lab-b.txt`).
 - The Falco pod is privileged, with kernel access and the containerd socket: it is a new, high-value attack surface.
 - The probe exception is based on the command line: an attacker who includes `vault status` in a command evades the Vault shell rule.
 - The Falcosidekick UI no longer accepts the chart's default `admin:admin`: its credentials come from a Secret created by hand, outside Git (`falcosidekick-ui-credentials`). The chart's own Secret still contains the default value and is overridden only because ours is loaded last (Kubernetes `envFrom` precedence). `admin:admin` must be re-tested after every chart upgrade (`docs/evidence/detection/ui-credentials-zt-lab-b.txt`).
