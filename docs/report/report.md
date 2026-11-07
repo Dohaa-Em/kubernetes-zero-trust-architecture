@@ -126,7 +126,20 @@ avoid tying every flow to Cilium (`docs/architecture-networkpolicy-vs-cilium.md`
 
 **Failure modes.** All Kyverno webhooks use `failurePolicy: Fail`, and the lab runs a single admission-controller replica. We measured two opposite behaviours (`docs/evidence/fail-mode/analysis.md`). When the controller is stopped cleanly (`scale --replicas=0`), Kyverno removes its resource webhooks (10 webhook configurations drop to 2) and a pod using the `latest` tag is admitted: the cluster is fail-open. When the controller crashes (pod killed with `--force --grace-period=0`), the webhooks stay registered, so the API server applies `Fail`: every pod creation, legitimate or not, is refused for about 30 seconds until the new pod is ready: the cluster is fail-closed. After a clean restart, protection came back 9 seconds after the rollout finished. A single replica therefore means that a clean stop removes the controls and a crash briefly blocks new pods. Three replicas with a PodDisruptionBudget are the usual mitigation; this was not tested on the single-node VM.
 
-> **TODO (A):** rule list with audit → enforce history.
+**Rules.**
+
+| Policy | Type | Mode | Effect |
+| --- | --- | --- | --- |
+| `best-practices-disallow-latest-tag` | validate | Enforce | Refuses images without a tag or with `latest` |
+| `best-practices-require-limits` | validate | Enforce | Requires CPU and memory limits |
+| `supply-chain-restrict-images` | validate | Enforce | Image allowlist: `ghcr.io/stefanprodan/*`, `nginxinc/nginx-unprivileged`, `postgres`, `curlimages/curl` |
+| `defaults-mutate-pod-defaults` | mutate | n/a | Adds secure defaults to pods |
+| `defaults-generate-default-deny` | generate | n/a | Creates a default-deny NetworkPolicy in every new `zt-*` namespace |
+| `secrets-only-from-eso` | validate | Enforce | Only the External Secrets Operator ServiceAccount may write Secrets in `zt-data` |
+
+The policies apply to the `zt-*` namespaces only (evidence: `docs/evidence/admission-kyverno/`, `docs/evidence/kyverno-extra/`, `docs/evidence/secrets-policy/`).
+
+**Rollout.** The policies were written and tested on a lab with no existing workload, so they went to `Enforce` directly (commit `961d229`, 3 November). We did not run an `Audit` phase. On a production cluster the usual path is `Audit`, review of the policy reports, then `Enforce`, so that existing workloads are not blocked.
 
 All application namespaces enforce Pod Security `restricted`, which rejects the S3
 privileged/hostPath pod even before Kyverno is involved. Kyverno adds what PSA cannot
@@ -207,8 +220,8 @@ Vault is unsealed, a forced sync brings the ExternalSecret back to `SecretSynced
 
 | Criterion | Native Secret | Vault + Agent sidecar | Vault + ESO (chosen) |
 | --- | --- | --- | --- |
-| Source of truth | etcd | Vault | Vault |
-| Stored in etcd | yes (base64, encrypted at rest only if enabled) | no | yes, as a copy |
+| Source of truth | cluster datastore | Vault | Vault |
+| Stored in the cluster datastore | yes (base64, encrypted at rest only if enabled) | no | yes, as a copy |
 | Application changes | none | annotations, file-based reading | none |
 | Network flow from workloads to Vault | n/a | yes, from every pod | **no**, only the ESO controller |
 | Rotation and history | manual, none | yes | yes (KV versions + refresh) |
@@ -216,7 +229,7 @@ Vault is unsealed, a forced sync brings the ExternalSecret back to `SecretSynced
 | Main risk | anyone with `get secrets` | injector webhook, many Vault clients | ESO controller can write Secrets cluster-wide |
 
 **Limits.**
-- The final Secret still lives in etcd. Its protection depends on RBAC and on encryption at rest (4.6).
+- The final Secret still lives in the cluster datastore (SQLite on single-node k3s, not etcd). Its protection depends on RBAC and on encryption at rest (4.6).
 - The ESO controller's ClusterRole allows reading and writing Secrets in every namespace: compromising ESO is equivalent to compromising every synchronised secret. Scoping it (`scopedNamespace`/`scopedRBAC`) is an improvement.
 - Running pods keep the old password in their environment until restarted. Application-side reloading, or Vault dynamic database credentials, would close this gap.
 - Lab shortcuts: TLS disabled inside the cluster, a single unseal key, a single replica, the root token kept on the admin machine.
@@ -364,11 +377,11 @@ driver (Longhorn, a cloud disk) would add replication, snapshots and encryption.
 into the container. With `hostPath: /` (the S3 test pod) the container can read
 `/etc/shadow` and the k3s credentials under `/var/lib/rancher/k3s/server`, including the
 encryption key from 4.6.2, write to `/etc/cron.d` or the containerd socket, and so take
-over the node and every workload on it. PSA `restricted` and Kyverno reject `hostPath`
-in application namespaces. Note that `local-path` itself relies on node directories: the
+over the node and every workload on it. PSA `restricted` rejects `hostPath`
+in application namespaces (`docs/evidence/admission-psa/`). Note that `local-path` itself relies on node directories: the
 isolation comes from the provisioner choosing the path, not the user.
 
-> **TODO (A):** confirm the volume types allowed by Kyverno and add the evidence path.
+**Volume types.** None of our Kyverno policies restricts volume types: that control belongs to Pod Security Admission. The `restricted` profile only allows `configMap`, `csi`, `downwardAPI`, `emptyDir`, `ephemeral`, `persistentVolumeClaim`, `projected` and `secret` volumes, and the application namespaces enforce it. Evidence: the S3 pod with `hostPath: /` is refused (`docs/evidence/admission-psa/`).
 
 ## 8. Security analysis: the six questions of section 2.6
 
@@ -416,6 +429,8 @@ run with lab shortcuts (no TLS, default credentials). Detection is not preventio
 | --- | --- | --- |
 | Whole cluster | Single node: compromising the node defeats every control | Several nodes, node hardening, kube-bench findings |
 | Application | The frontend can still abuse the API (legitimate flow) | Cilium L7 policy in production, API authentication |
+| Admission | Kyverno runs with a single replica: a clean stop removes its webhooks (fail-open), a crash blocks every pod creation for about 30 s (fail-closed) | Three replicas with a PodDisruptionBudget, alert when the webhooks disappear |
+| Admission | Kyverno runs with a single replica: a clean stop removes its webhooks (fail-open), a crash blocks every pod creation for about 30 s (fail-closed) | Three replicas with a PodDisruptionBudget, alert when the webhooks disappear |
 | Network | No pod-to-pod encryption (WireGuard shown only as an option) | Cilium transparent encryption, or a service mesh with mTLS |
 | Secrets | ESO controller has cluster-wide access to Secrets; pods keep old passwords until restart | Scoped ESO, Vault dynamic database credentials, automatic restart |
 | Vault | TLS off, one unseal key, root token on the admin machine | TLS, auto-unseal with a KMS, revoke the root token after setup |
@@ -458,10 +473,10 @@ Measured on `zt-lab-b` with `kubectl top pods -A` (6 November 2026, idle lab, al
 | External Secrets Operator (controller, webhook, cert-controller) | 3 | 6 m | 124 MiB |
 | Vault | 1 | 32 m | 46 MiB |
 | Falco + Falcosidekick + UI + Redis | 4 | 29 m | 116 MiB |
-| Kyverno | | | TODO (A, measured on `zt-lab-a`) |
+| Kyverno (admission, background, cleanup and reports controllers) | 4 | 91 m | 306 MiB |
 
-The security tooling uses **about 17 times more memory than the application it
-protects** (≈ 590 MiB against 35 MiB, without Kyverno). On a real cluster this cost is shared by many
+The security tooling uses **about 26 times more memory than the application it
+protects** (≈ 895 MiB against 35 MiB with Kyverno, ≈ 590 MiB without it). On a real cluster this cost is shared by many
 applications, but it confirms that each tool must earn its place: Cilium is the most
 expensive, and it is also the one that enforces every network control.
 
