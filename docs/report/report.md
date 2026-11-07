@@ -8,7 +8,7 @@
 | Repository | `penelopeeckhar/kubernetes-zero-trust-architecture` |
 | Clusters | `zt-lab-a` (Debian 13), `zt-lab-b` (Ubuntu 24.04), k3s v1.36.5+k3s1, single node |
 | Writing | B (this document), review by A |
-| Status | Draft of 6 November 2026. Sections marked **TODO** are completed after integration (phase 7) and measurements (phase 8). |
+| Status | Updated 8 November 2026. Remaining **TODO**: architecture diagrams, Trivy scan and rebuild on zt-lab-b (B), final synthesis. |
 
 ---
 
@@ -437,13 +437,13 @@ isolation comes from the provisioner choosing the path, not the user.
 
 **1. Which components are the most sensitive?**
 In order: the **kube-apiserver and its datastore** (they control everything), **Vault and
-its unseal key** (every application secret), the **ESO controller** (can write Secrets in any
-namespace), and the **privileged node agents, Cilium and Falco** (kernel access). Among
+its unseal key** (every application secret), the **ESO controller** (scoped to `zt-data` since the
+review, where it can still write every Secret), and the **privileged node agents, Cilium and Falco** (kernel access). Among
 applications, the **database**, which holds the data and the most valuable credential.
 
 **2. Which permissions does each component need?**
 Application workloads need **no Kubernetes API permission at all**: no token is mounted.
-ESO needs read/write on Secrets and a TokenRequest for `eso-vault`. Vault needs
+ESO needs read/write on Secrets of `zt-data` only (scoped RBAC) and a TokenRequest for `eso-vault`. Kyverno's background controller needs to create and delete NetworkPolicies to generate the default deny. Vault needs
 `system:auth-delegator` to validate tokens. Falco needs read access to the runtime socket
 and the kernel. Details: section 4.2 and 4.5.
 
@@ -451,7 +451,7 @@ and the kernel. Details: section 4.2 and 4.5.
 Measured for the frontend (section 5): in the baseline, every service, the Kubernetes API
 and the Internet, plus every secret of `zt-data`. With all layers: **only the API on port 9898**,
 the legitimate flow, with no token to talk to Kubernetes, and no way to log into Vault even
-with a stolen token. Remaining risk: abusing the API itself (section 9).
+with a stolen token. Remaining risk: abusing the API itself (section 9). Confirmed on the cluster rebuilt from scratch: the measurement is identical (`docs/evidence/rebuild/results-zt-lab-a.md`).
 
 **4. What prevents or limits lateral movement?**
 Default-deny NetworkPolicy enforced by Cilium (network), the absence of tokens and
@@ -471,7 +471,6 @@ See section 9. In short: everything runs on a **single node**, so a node comprom
 defeats every control. The legitimate frontend → API flow remains open. Several tools
 run with lab shortcuts (no TLS, default credentials). Detection is not prevention.
 
-> **TODO (phase 7):** confirm questions 2 and 3 against the final replay.
 
 ## 9. Limits and residual risks
 
@@ -537,14 +536,22 @@ The `README.md` rebuilds the lab from an empty VM. Versions are pinned in
 script in the repository. No secret is stored in Git: Gitleaks runs on every commit, and
 the Vault unseal material is excluded by `.gitignore`.
 
+**Rebuild test.** On 8 November 2026 zt-lab-a was destroyed (`k3s-uninstall.sh`, reboot) and rebuilt by following only the README, in 47 minutes. The six acceptance criteria were met: node ready and Cilium healthy, the 6 Kyverno CLI tests, R1 and R10 refused, ESO synchronised and scoped to `zt-data`, the Falco alert on the bypass with no false alert at container start, and a blast-radius measurement identical to the original cluster. The rebuild found three gaps in the README (copying the kubeconfig, the initial `db-creds` Secret, the Kyverno wait on a slow link), fixed in commit `2549f76`. Journal and proofs: `docs/evidence/rebuild/`.
+
+> **TODO (B):** result of the same rebuild on zt-lab-b, in `docs/evidence/rebuild/`.
+
 ## Appendix A: evidence index
 
 | Section | Evidence |
 | --- | --- |
 | 4.1 | `docs/evidence/baseline/`, `docs/evidence/phase-1/networkpolicy-check/` |
 | 4.2 | `docs/evidence/rbac/` |
-| 4.3 | `docs/evidence/network/`, `docs/evidence/cilium-l7/`, `docs/evidence/network-after-l7/` |
+| 4.3 | `docs/evidence/network/` (including `api-to-database-zt-lab-a.txt`), `docs/evidence/cilium-l7/`, `docs/evidence/network-after-l7/`, `docs/evidence/network-vault-falco/` |
 | 4.4 | `docs/evidence/admission-psa/`, `docs/evidence/admission-kyverno/`, `docs/evidence/kyverno-extra/` |
 | 4.5 | `docs/evidence/secrets/` (results, rotation, `captures/`) |
 | 4.6 | `docs/evidence/audit/`, `docs/evidence/etcd-encryption/`, `docs/evidence/detection/` |
-| 5 | `docs/evidence/blast-radius.md` |
+| 5 | `docs/evidence/blast-radius.md`, `docs/evidence/integration/` |
+| 4.4 (failure modes) | `docs/evidence/fail-mode/` |
+| Cross-reviews | `docs/reviews/`, `docs/evidence/review/`, `docs/evidence/secrets-policy/` (R10, A1) |
+| 6 | `docs/evidence/final/` (kube-bench, Kubescape), `docs/evidence/kube-bench/` |
+| 11 | `docs/evidence/rebuild/` |
