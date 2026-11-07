@@ -191,8 +191,15 @@ is visible in Falco: the alert for an administrative command shows
 | Vault UI: version history | 3 versions (initial copy + 2 rotations) |
 
 The rotation script changes the password in PostgreSQL, writes a new KV version,
-forces an ESO sync and verifies a real TCP connection. Evidence files contain only
-hash prefixes, never the password.
+forces an ESO sync, waits until the Secret holds the new value, then verifies a real
+TCP connection. It exits with an error if any step fails, so it can be used in
+automation. Evidence files contain only hash prefixes, never the password.
+
+**Observed failure behaviour.** After a VM reboot, Vault starts sealed. ESO's first
+attempts fail (`SecretSyncedError`), yet the application keeps working: thanks to
+`deletionPolicy: Retain` the last good value of `db-creds` stays in place. As soon as
+Vault is unsealed, a forced sync brings the ExternalSecret back to `SecretSynced`.
+`secrets/vault-unseal.sh` now triggers that sync itself.
 
 **Comparison of approaches** (required by the secrets topic, used to justify our choice):
 
@@ -211,7 +218,7 @@ hash prefixes, never the password.
 - The ESO controller's ClusterRole allows reading and writing Secrets in every namespace: compromising ESO is equivalent to compromising every synchronised secret. Scoping it (`scopedNamespace`/`scopedRBAC`) is an improvement.
 - Running pods keep the old password in their environment until restarted. Application-side reloading, or Vault dynamic database credentials, would close this gap.
 - Lab shortcuts: TLS disabled inside the cluster, a single unseal key, a single replica, the root token kept on the admin machine.
-- Issue #16 is still open: a Kyverno rule rejecting hand-made Secrets in `zt-data` (except from ESO), and NetworkPolicy for the `vault`, `external-secrets` and `falco` namespaces.
+- Closing the chain (issue #16): A added `admission/70-secrets-only-from-eso.yaml`, which rejects any Secret in `zt-data` not written by the ESO controller, and default-deny NetworkPolicy for `vault` and `external-secrets` (`network/40-vault-eso.yaml`). On `zt-lab-b`, ESO still syncs through these policies and the attacker pod can no longer reach Vault (`docs/evidence/network-vault-falco/results-zt-lab-b.txt`).
 
 ### 4.6 Traceability and detection: audit, encryption at rest, Falco (B)
 
@@ -285,13 +292,22 @@ We added a documented exception (macro `zt_vault_probe`) and removed a condition
 
 **Proof** (`docs/evidence/detection/`): all five rules fire with the correct namespace and pod
 (`alerts-zt-lab-b.tsv`). The Falcosidekick UI shows the alerts by priority and by MITRE tag
-(`captures/`).
+(`captures/`). With A's NetworkPolicy for the `falco` namespace (`network/50-falco.yaml`),
+alerts still reach Falcosidekick, Falco restarts and downloads its rules under default
+deny, and a connection from the database to the Internet is both **blocked** and
+**detected** (`docs/evidence/network-vault-falco/results-zt-lab-b.txt`).
+
+**Hardening after kube-bench.** Falco reads container metadata through the containerd
+socket and does not call the Kubernetes API, so its four pods no longer mount a
+ServiceAccount token (`scripts/harden-serviceaccounts.sh`). Alerts still carry namespace
+and pod after the change.
 
 **Limits.**
 - Falco detects but **does not block**. It complements prevention, it does not replace it.
 - The Falco pod is privileged, with kernel access and the containerd socket: it is a new, high-value attack surface.
 - The probe exception is based on the command line: an attacker who includes `vault status` in a command evades the Vault shell rule.
-- Falcosidekick UI uses the chart's default credentials (`admin:admin`) and is reachable only through `port-forward`. This must change before any real use.
+- The Falcosidekick UI no longer accepts the chart's default `admin:admin`: its credentials come from a Secret created by hand, outside Git (`falcosidekick-ui-credentials`). The chart's own Secret still contains the default value and is overridden only because ours is loaded last (Kubernetes `envFrom` precedence). `admin:admin` must be re-tested after every chart upgrade (`docs/evidence/detection/ui-credentials-zt-lab-b.txt`).
+- The `falco` namespace allows HTTPS to any destination for the Falco pod, so that falcoctl can download rules from changing CDN addresses. A rule pinned by domain name would be stricter.
 - Without monitoring of Falco itself, a stopped Falco is a silent blind spot.
 
 ## 5. Blast radius after compromise of the frontend
@@ -305,18 +321,24 @@ Source: `docs/evidence/blast-radius.md`, produced by `scripts/measure.sh` at eac
 | + NetworkPolicy | reachable | blocked | blocked | blocked | no | no | accepted | not readable |
 | + PSA | reachable | blocked | blocked | blocked | no | no | rejected | not readable |
 | + Kyverno | reachable | blocked | blocked | blocked | no | no | rejected | not readable |
-| + Vault/ESO | | | | | | | | **TODO (phase 7)** |
-| + Falco | | | | | | | | **TODO (phase 7)** |
+| Integration (+ Vault/ESO + Falco) | reachable | blocked | blocked | blocked | no | no | rejected | not readable |
 
 What Vault/ESO and Falco add is not visible in these columns, because they reduce other
 risks: who can obtain the secret, whether it rotates, and whether an attack is noticed.
 Their effect is measured in 4.5 and 4.6.
 
-> **TODO (A and B, phase 7):** final replay of S1–S4 on both clusters with every layer applied.
+The integration row is the replay of S1–S4 on `zt-lab-a` with every layer active
+(`docs/evidence/integration/`). It shows that adding Vault, ESO and Falco did not weaken
+any earlier control.
+
+> **TODO (B, phase 7):** same replay on `zt-lab-b` once Kyverno is installed there.
 
 ## 6. Compliance
 
 **kube-bench** (CIS `k3s-cis-1.9`, v0.16.0, zt-lab-a): 59 PASS and 4 FAIL after two fixes (PKI certificate permissions, default ServiceAccounts without token). The 4 remaining findings are analysed in `docs/evidence/final/kube-bench-analysis.md`: two false positives on the CNI file path, one not applicable (k3s uses SQLite, not etcd), one justified (system components need their token).
+`zt-lab-b` gives the same result, from 57 PASS / 6 FAIL before to 59 PASS / 4 FAIL after
+the same fixes (`docs/evidence/kube-bench/README.md`). The two clusters therefore agree,
+although they run different operating systems (Debian 13 and Ubuntu 24.04).
 
 > **TODO (phase 8):** Kubescape (NSA, MITRE) by A, Trivy image scan by B, results in `docs/evidence/final/`.
 
@@ -397,7 +419,7 @@ run with lab shortcuts (no TLS, default credentials). Detection is not preventio
 | Vault | TLS off, one unseal key, root token on the admin machine | TLS, auto-unseal with a KMS, revoke the root token after setup |
 | Encryption at rest | Key stored on the same node | KMS provider |
 | Audit | Log kept on the node only | Ship to a SIEM |
-| Detection | Falco detects but does not block; command-line based exceptions; default UI credentials | Response through Falco Talon or Tetragon enforcement; tighter exceptions; credentials changed |
+| Detection | Falco detects but does not block; command-line based exceptions; UI credentials rely on `envFrom` order; Falco pod allowed HTTPS to any destination | Response through Falco Talon or Tetragon enforcement; tighter exceptions; chart-native secret handling; FQDN egress rule |
 
 ## 10. Answer to the central question
 
@@ -415,7 +437,7 @@ what the previous layers already do, and accepted with the attack surface it add
 | Cilium + Hubble | Enforces NetworkPolicy; adds L7 and flow visibility | partly (L3/L4 by any CNI) | privileged eBPF agent | 303 MiB, 54 m CPU | no pod networking |
 | PSA (native) | S3: privileged/hostPath rejected | nothing | none | none | n/a, built into the API server |
 | Kyverno | What PSA cannot express (tags, limits, images, generated default deny) | partly (S3 already by PSA) | admission webhook with cluster-wide rights | memory, policy maintenance | fail-open or fail-closed (TODO A) |
-| Vault + ESO | S4: secret owned, versioned, rotated, unusable with a stolen token | partly (RBAC already hides it) | Vault, unseal key, ESO controller | 170 MiB, 38 m CPU | Vault sealed: no new sync, existing Secrets kept |
+| Vault + ESO | S4: secret owned, versioned, rotated, unusable with a stolen token | partly (RBAC already hides it) | Vault, unseal key, ESO controller | 170 MiB, 38 m CPU | Vault sealed: ESO in `SecretSyncedError`, existing Secret kept, app unaffected (observed after a reboot) |
 | Audit + encryption at rest (native k3s) | Traceability; S4 from a stolen backup | nothing | log volume, key on node | disk | loss of traceability; key loss = unreadable Secrets |
 | Falco | Visibility of S1, S2 and S4 attempts, even when blocked | nothing (detection) | privileged pod, kernel access | 116 MiB, 29 m CPU | silent blind spot |
 
