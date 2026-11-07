@@ -1,0 +1,19 @@
+=== R1 : initContainers hors controle Kyverno - zt-lab-a - 2026-11-07T21:52:48+02:00
+### AVANT correction : initContainer alpine:latest, hors liste, sans limites
+pod/bypass-test created (server dry run)
+ok      admission/10-disallow-latest-tag.yaml
+ok      admission/10-disallow-latest-tag.yaml
+ok      admission/20-require-limits.yaml
+ok      admission/30-restrict-images.yaml
+clusterpolicy.kyverno.io/best-practices-disallow-latest-tag configured
+clusterpolicy.kyverno.io/best-practices-require-limits configured
+clusterpolicy.kyverno.io/supply-chain-restrict-images configured
+### APRES correction : le meme pod (doit etre refuse)
+Error from server: error when creating "docs/evidence/review/initcontainer-bypass.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+resource Pod/zt-attacker/bypass-test was blocked due to the following policies 
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/initContainers/0/image/'
+best-practices-require-limits:
+  require-cpu-memory-limits: 'validation error: CPU and memory limits are required. rule require-cpu-memory-limits failed at path /spec/initContainers/0/resources/limits/'
+### APRES : pod legitime avec un initContainer conforme (doit etre accepte)
+pod/init-ok created (server dry run)

@@ -18,5 +18,7 @@ spec:
         message: "Image not in the project allowlist."
         pattern:
           spec:
+            =(initContainers):
+              - image: "ghcr.io/stefanprodan/* | nginxinc/nginx-unprivileged:* | postgres:* | curlimages/curl:*"
             containers:
               - image: "ghcr.io/stefanprodan/* | nginxinc/nginx-unprivileged:* | postgres:* | curlimages/curl:*"

@@ -1,0 +1,24 @@
+Loading test  ( admission/tests/kyverno-test.yaml ) ...
+  Loading values/variables ...
+  Loading policies ...
+  Warning: admission/10-disallow-latest-tag.yaml: kyverno.io/v1 ClusterPolicy is deprecated and will be removed in a future release; migrate to ValidatingPolicy, MutatingPolicy, GeneratingPolicy or ImageValidatingPolicy (policies.kyverno.io), see https://kyverno.io/docs/guides/migration-to-cel/
+  Warning: admission/20-require-limits.yaml: kyverno.io/v1 ClusterPolicy is deprecated and will be removed in a future release; migrate to ValidatingPolicy, MutatingPolicy, GeneratingPolicy or ImageValidatingPolicy (policies.kyverno.io), see https://kyverno.io/docs/guides/migration-to-cel/
+  Loading resources ...
+  Loading exceptions ...
+  Applying 2 policies to 3 resources with 0 exceptions ...
+  Checking results ...
+
+│────│────────────────────────────────────│───────────────────────────│─────────────────────────────────│────────│────────│
+│ [40;32mID[0m │ [40;32mPOLICY                            [0m │ [40;32mRULE                     [0m │ [40;32mRESOURCE                       [0m │ [40;32mRESULT[0m │ [40;32mREASON[0m │
+│────│────────────────────────────────────│───────────────────────────│─────────────────────────────────│────────│────────│
+│ 1  │ best-practices-disallow-latest-tag │ validate-image-tag        │ v1/Pod/zt-attacker/good-pod     │ Pass   │ Ok     │
+│ 2  │ best-practices-disallow-latest-tag │ validate-image-tag        │ v1/Pod/zt-attacker/bad-pod      │ Pass   │ Ok     │
+│ 3  │ best-practices-require-limits      │ require-cpu-memory-limits │ v1/Pod/zt-attacker/good-pod     │ Pass   │ Ok     │
+│ 4  │ best-practices-require-limits      │ require-cpu-memory-limits │ v1/Pod/zt-attacker/bad-pod      │ Pass   │ Ok     │
+│ 5  │ best-practices-disallow-latest-tag │ validate-image-tag        │ v1/Pod/zt-attacker/bad-init-pod │ Pass   │ Ok     │
+│ 6  │ best-practices-require-limits      │ require-cpu-memory-limits │ v1/Pod/zt-attacker/bad-init-pod │ Pass   │ Ok     │
+│────│────────────────────────────────────│───────────────────────────│─────────────────────────────────│────────│────────│
+
+
+Test Summary: 6 tests passed and 0 tests failed
+

@@ -14,3 +14,15 @@ spec:
   containers:
   - name: c
     image: busybox:latest
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: bad-init-pod, namespace: zt-attacker}
+spec:
+  initContainers:
+  - name: init
+    image: alpine:latest
+  containers:
+  - name: c
+    image: curlimages/curl:8.10.1
+    resources: {limits: {cpu: 50m, memory: 32Mi}}

@@ -18,6 +18,11 @@ spec:
         message: "CPU and memory limits are required."
         pattern:
           spec:
+            =(initContainers):
+              - resources:
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"
             containers:
               - resources:
                   limits:

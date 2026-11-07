@@ -11,3 +11,5 @@ results:
   - {policy: best-practices-disallow-latest-tag, rule: validate-image-tag, resources: [bad-pod], kind: Pod, result: fail}
   - {policy: best-practices-require-limits, rule: require-cpu-memory-limits, resources: [good-pod], kind: Pod, result: pass}
   - {policy: best-practices-require-limits, rule: require-cpu-memory-limits, resources: [bad-pod], kind: Pod, result: fail}
+  - {policy: best-practices-disallow-latest-tag, rule: validate-image-tag, resources: [bad-init-pod], kind: Pod, result: fail}
+  - {policy: best-practices-require-limits, rule: require-cpu-memory-limits, resources: [bad-init-pod], kind: Pod, result: fail}
