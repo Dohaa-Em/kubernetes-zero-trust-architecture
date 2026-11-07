@@ -52,7 +52,7 @@ Every tool added to reduce a risk is also a new target. What we measured and cha
 | ESO controller | Its ClusterRole could read every Secret of the cluster | Scoped to `zt-data` (`scopedRBAC`, `scopedNamespace`): `kube-system`, `vault`, `zt-api` now `no` | `docs/evidence/secrets-policy/eso-scoped-rbac-zt-lab-a.txt`, `docs/evidence/review/retest-a1-a2-zt-lab-b.txt` |
 | Vault | Reached by a compromised pod; root token leak | Default deny in `vault`, only ESO allowed on 8200; secrets never passed as `kubectl exec` arguments | `docs/evidence/network-vault-falco/` |
 | Kyverno | Bypass of the rules; outage | initContainers validated (R1); updates validated (R10); fail-open and fail-closed behaviour measured | `docs/reviews/review-B-on-A.md`, `docs/evidence/fail-mode/` |
-| Falco | Evasion of a rule | Shell-rule exclusion no longer triggered by a string placed anywhere in the command: anchored to the start of the command line (A2); bypass now alerts, container start stays silent | `docs/evidence/detection/a2-docker-entrypoint-zt-lab-a.txt` |
+| Falco | Evasion of a rule | `docker-entrypoint` exclusion removed from the shell rule (A2): writing that string in a command silenced the alert, and container start launches no shell; the bypass now alerts, container start stays silent | `docs/evidence/detection/a2-docker-entrypoint-zt-lab-a.txt` |
 | Falcosidekick UI | Default credentials | Login read from a Secret created outside Git | `docs/evidence/detection/ui-credentials-zt-lab-b.txt` |
 | Security pods | Unneeded API tokens | Falco pods and every `default` ServiceAccount without token (kube-bench 5.1.5, 5.1.6) | `docs/evidence/kube-bench/README.md` |
 
