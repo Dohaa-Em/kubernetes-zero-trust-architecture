@@ -57,7 +57,6 @@ customRules:
         spawned_process and container
         and proc.name in (zt_shells)
         and k8s.ns.name in (zt_app_namespaces)
-        and not proc.cmdline startswith "/bin/sh /docker-entrypoint"
       output: >
         ZT shell in app container (ns=%k8s.ns.name pod=%k8s.pod.name user=%user.name
         cmd=%proc.cmdline parent=%proc.pname image=%container.image.repository)

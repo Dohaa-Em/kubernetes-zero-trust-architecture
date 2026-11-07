@@ -6,3 +6,9 @@ contournement (echo docker-entrypoint) : alertes en 1 min = 1
 temoin : alertes = 1  (attendu >= 1)
 contournement echo docker-entrypoint : alertes = 1  (attendu >= 1, corrige)
 demarrage nginx frontend (ns=zt-frontend) : alertes = 0  (attendu 0, pas de faux positif)
+
+### CORRECTION (7 nov, relecture de Doha) : l'exclusion est supprimee
+Note : la ligne 'contournement = 1' de la mesure AVANT comptait l'alerte du temoin 'sh -c id' (fenetre d'1 minute commune). Mesure seule par Doha : 0 alerte. Le startswith "/bin/sh ..." ne correspondait pas non plus (cmdline commence par 'sh'). Le demarrage de nginx ne lance aucun shell : l'exclusion n'a plus d'utilite et est retiree.
+temoin 'marqueur-temoin' : alertes = 1  (attendu >= 1)
+contournement 'echo docker-entrypoint' : alertes = 1  (attendu >= 1)
+demarrage frontend (ns=zt-frontend) : alertes = 0  (attendu 0)
