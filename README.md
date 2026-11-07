@@ -39,7 +39,8 @@ sudo cp cluster/audit/k3s-secrets-encryption.yaml /etc/rancher/k3s/config.yaml.d
 # 2. k3s (pinned, without Flannel, kube-proxy network policy or Traefik)
 sudo cp cluster/k3s-config.yaml /etc/rancher/k3s/config.yaml
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.5+k3s1 sh -
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+# the file is mode 0600 for root: copy it, do not just export KUBECONFIG
+mkdir -p ~/.kube && sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config && sudo chown $USER:$USER ~/.kube/config && chmod 600 ~/.kube/config
 
 # 3. Cilium 1.20.4 (replaces kube-proxy, VXLAN tunnel, Hubble relay and UI)
 cilium install --version 1.20.4 \
@@ -54,6 +55,9 @@ cilium status --wait
 
 # 4. Namespaces (with Pod Security "restricted" labels), application and RBAC
 kubectl apply -f app/00-namespaces.yaml
+# initial hand-made Secret (random value): the database reads it, Vault copies it in step 5, ESO then takes it over
+kubectl create secret generic db-creds -n zt-data \
+  --from-literal=password="$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-24)"
 kubectl apply -f app/ -f rbac/
 
 # 5. Vault, External Secrets Operator and Falco: steps 2 to 4 of
@@ -67,8 +71,8 @@ helm repo add kyverno https://kyverno.github.io/kyverno/ && helm repo update
 helm install kyverno kyverno/kyverno -n kyverno --create-namespace --version 3.9.2 \
   --set features.policyExceptions.enabled=true \
   --set features.policyExceptions.namespace=kyverno
-kubectl -n kyverno rollout status deploy/kyverno-admission-controller --timeout=180s
-kubectl apply -f admission/
+kubectl -n kyverno rollout status deploy/kyverno-admission-controller --timeout=600s   # slow links: images take minutes
+kubectl apply -f admission/   # if it says "no endpoints available", wait a minute and run it again
 kyverno test admission/tests/
 
 # 8. ServiceAccount hardening: LAST, after Kyverno (step 5 of docs/reproduce-secrets-detection.md)
