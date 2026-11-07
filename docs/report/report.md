@@ -318,7 +318,7 @@ Their effect is measured in 4.5 and 4.6.
 
 **kube-bench** (CIS `k3s-cis-1.9`, v0.16.0, zt-lab-a): 59 PASS and 4 FAIL after two fixes (PKI certificate permissions, default ServiceAccounts without token). The 4 remaining findings are analysed in `docs/evidence/final/kube-bench-analysis.md`: two false positives on the CNI file path, one not applicable (k3s uses SQLite, not etcd), one justified (system components need their token).
 
-> **TODO (phase 8):** Kubescape (NSA, MITRE) by A, kube-bench on zt-lab-b and Trivy image scan by B, results in `docs/evidence/final/`.
+> **TODO (phase 8):** Kubescape (NSA, MITRE) by A, Trivy image scan by B, results in `docs/evidence/final/`.
 
 ## 7. Storage security
 
