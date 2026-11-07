@@ -7,7 +7,7 @@ tests sur `zt-lab-b` avec toutes les couches actives.
 ## Points forts
 
 - Default deny ingress **et** egress dans chaque namespace applicatif, DNS explicite, un flux par chemin légitime, sélecteurs sur `kubernetes.io/metadata.name` (étiquette non modifiable). Résultat S1 identique sur les deux clusters.
-- Zéro permission Kubernetes pour les workloads, aucun token monté, et 7 permissions dangereuses vérifiées pour les 5 comptes (`docs/evidence/rbac/dangerous-permissions-zt-lab-a.txt`). Le choix « aucune Role » est justifié dans le rapport (4.2).
+- Zéro permission Kubernetes pour les workloads, aucun token monté, et 8 contrôles de permissions dangereuses (7 droits nommés plus « tous les verbes sur toutes les ressources ») vérifiés pour les 5 comptes (`docs/evidence/rbac/dangerous-permissions-zt-lab-a.txt`). Le choix « aucune Role » est justifié dans le rapport (4.2).
 - Analyse fail-open / fail-closed de Kyverno mesurée (`docs/evidence/fail-mode/analysis.md`), y compris la tentative écartée et pourquoi.
 - Politiques ESO (`70`) et NetworkPolicy des outils (`40`, `50`) vérifiées aussi sur `zt-lab-b` (`85ec20c`).
 
