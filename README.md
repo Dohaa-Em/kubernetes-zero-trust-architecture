@@ -1,5 +1,7 @@
 # Kubernetes Zero Trust Architecture
 
+[![CI](https://github.com/penelopeeckhar/kubernetes-zero-trust-architecture/actions/workflows/ci.yml/badge.svg)](https://github.com/penelopeeckhar/kubernetes-zero-trust-architecture/actions/workflows/ci.yml)
+
 A reproducible Zero Trust lab on Kubernetes: default-deny networking, least-privilege RBAC,
 admission control, secret management and runtime detection, with measured results for four
 attack scenarios.
