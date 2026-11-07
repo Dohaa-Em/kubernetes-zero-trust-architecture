@@ -389,7 +389,9 @@ must be set at install time for `admission/60-policy-exception.yaml` to work.
 the same fixes (`docs/evidence/kube-bench/README.md`). The two clusters therefore agree,
 although they run different operating systems (Debian 13 and Ubuntu 24.04).
 
-> **TODO (phase 8):** Kubescape (NSA, MITRE) by A, Trivy image scan by B, results in `docs/evidence/final/`.
+Kubescape v4.0.20 (NSA and MITRE frameworks, 38 of 40 controls evaluated) found one real defect on our workloads: C-0013 (non-root containers) on frontend, api and attacker, caused by a missing `runAsGroup`. It was fixed in `app/` and the `zt-*` namespaces now show no failed control (NSA 68.07 to 68.75, MITRE 65.11). The remaining failures come from third-party charts (Kyverno, External Secrets Operator, Falco, Vault) or are false positives (Kyverno's own webhooks flagged as a risk by C-0036 and C-0039); analysis in `docs/evidence/final/kubescape-analysis.md`.
+
+> **TODO (phase 8):** Trivy image scan by B, results in `docs/evidence/final/`.
 
 ## 7. Storage security
 

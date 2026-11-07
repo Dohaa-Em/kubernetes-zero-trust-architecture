@@ -19,6 +19,7 @@ spec:
   securityContext:
     runAsNonRoot: true
     runAsUser: 100
+    runAsGroup: 100
     seccompProfile: {type: RuntimeDefault}
   containers:
   - name: curl

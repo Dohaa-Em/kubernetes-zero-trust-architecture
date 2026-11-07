@@ -19,6 +19,7 @@ Les deux membres installent exactement ces versions. Toujours donner la version 
 | Vault | chart 0.34.1 | application 2.0.4, Raft, 1 réplica |
 | External Secrets Operator | chart 2.14.0 | API external-secrets.io/v1 |
 | kube-bench | 0.16.0 | profil k3s-cis-1.9, lancé sur zt-lab-a (Abir Majdi) et zt-lab-b (Doha El Merabet) |
+| Kubescape | v4.0.20 | cadres NSA et MITRE, lancé sur zt-lab-a (Abir Majdi) |
 
 ## Machines
 
