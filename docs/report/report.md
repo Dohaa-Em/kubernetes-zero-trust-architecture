@@ -124,7 +124,9 @@ avoid tying every flow to Cilium (`docs/architecture-networkpolicy-vs-cilium.md`
 
 ### 4.4 Admission: Pod Security Admission and Kyverno (A)
 
-> **TODO (A):** rule list with audit → enforce history and the fail-open/fail-closed test.
+**Failure modes.** All Kyverno webhooks use `failurePolicy: Fail`, and the lab runs a single admission-controller replica. We measured two opposite behaviours (`docs/evidence/fail-mode/analysis.md`). When the controller is stopped cleanly (`scale --replicas=0`), Kyverno removes its resource webhooks (10 webhook configurations drop to 2) and a pod using the `latest` tag is admitted: the cluster is fail-open. When the controller crashes (pod killed with `--force --grace-period=0`), the webhooks stay registered, so the API server applies `Fail`: every pod creation, legitimate or not, is refused for about 30 seconds until the new pod is ready: the cluster is fail-closed. After a clean restart, protection came back 9 seconds after the rollout finished. A single replica therefore means that a clean stop removes the controls and a crash briefly blocks new pods. Three replicas with a PodDisruptionBudget are the usual mitigation; this was not tested on the single-node VM.
+
+> **TODO (A):** rule list with audit → enforce history.
 
 All application namespaces enforce Pod Security `restricted`, which rejects the S3
 privileged/hostPath pod even before Kyverno is involved. Kyverno adds what PSA cannot
@@ -436,7 +438,7 @@ what the previous layers already do, and accepted with the attack surface it add
 | NetworkPolicy (native) | S1: 4 reachable targets → 1 | nothing at L3/L4 | none | none (needs a CNI) | depends on the CNI |
 | Cilium + Hubble | Enforces NetworkPolicy; adds L7 and flow visibility | partly (L3/L4 by any CNI) | privileged eBPF agent | 303 MiB, 54 m CPU | no pod networking |
 | PSA (native) | S3: privileged/hostPath rejected | nothing | none | none | n/a, built into the API server |
-| Kyverno | What PSA cannot express (tags, limits, images, generated default deny) | partly (S3 already by PSA) | admission webhook with cluster-wide rights | memory, policy maintenance | fail-open or fail-closed (TODO A) |
+| Kyverno | What PSA cannot express (tags, limits, images, generated default deny) | partly (S3 already by PSA) | admission webhook with cluster-wide rights | memory, policy maintenance | fail-open on a clean stop, fail-closed for about 30 s on a crash (measured, section 4.4) |
 | Vault + ESO | S4: secret owned, versioned, rotated, unusable with a stolen token | partly (RBAC already hides it) | Vault, unseal key, ESO controller | 170 MiB, 38 m CPU | Vault sealed: ESO in `SecretSyncedError`, existing Secret kept, app unaffected (observed after a reboot) |
 | Audit + encryption at rest (native k3s) | Traceability; S4 from a stolen backup | nothing | log volume, key on node | disk | loss of traceability; key loss = unreadable Secrets |
 | Falco | Visibility of S1, S2 and S4 attempts, even when blocked | nothing (detection) | privileged pod, kernel access | 116 MiB, 29 m CPU | silent blind spot |
