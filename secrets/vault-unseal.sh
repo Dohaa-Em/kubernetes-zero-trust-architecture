@@ -36,3 +36,11 @@ if [ "$(curl -s $V/sys/seal-status | jq -r .sealed)" = "true" ]; then
 fi
 
 curl -s $V/sys/seal-status | jq '{initialized, sealed, version, storage_type}'
+
+# Après un redémarrage, ESO a échoué tant que Vault était scellé (SecretSyncedError,
+# l'application garde la dernière valeur grâce à deletionPolicy: Retain).
+# On relance la synchronisation sans attendre son délai de réessai.
+if kubectl -n zt-data get externalsecret db-creds >/dev/null 2>&1; then
+  kubectl -n zt-data annotate externalsecret db-creds force-sync="$(date +%s)" --overwrite >/dev/null
+  echo "== Synchronisation ESO relancée"
+fi
