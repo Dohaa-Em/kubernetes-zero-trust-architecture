@@ -65,3 +65,12 @@ dans Kubernetes : ne pas les ajouter à cette politique-là.
 
 Validation après correction : relancer le test 1, qui doit être **refusé**, puis
 `kyverno test admission/tests/` avec un cas `initContainer` ajouté.
+
+## Complément du 7 novembre au soir : R10
+
+| # | Gravité | Fichier | Constat | Proposition |
+| --- | --- | --- | --- | --- |
+| R10 | **Haute** | `admission/70-secrets-only-from-eso.yaml` | La politique ne bloque que la **création**. Toute **modification** d'un Secret de `zt-data` par un autre compte qu'ESO est acceptée : `kubectl annotate secret db-creds` par l'administrateur a réussi (`docs/evidence/secrets-policy/results-zt-lab-b.txt`, test 2). Cause : depuis Kyverno 1.13, `allowExistingViolations` vaut `true` par défaut. Sur un UPDATE, Kyverno évalue aussi l'ancien objet et laisse passer s'il violait déjà la règle. Or cette règle ne dépend que de l'utilisateur de la requête, donc l'ancien objet « viole » toujours. | Ajouter `allowExistingViolations: false` sous `failureAction: Enforce`. **Testé sur zt-lab-b** : la modification par l'administrateur est refusée, la rotation par ESO passe toujours (`docs/evidence/review/secrets-policy-update-fix-zt-lab-b.txt`). |
+
+Correction appliquée temporairement sur `zt-lab-b` (copie du fichier). Le fichier du dépôt
+reste à modifier par A.
