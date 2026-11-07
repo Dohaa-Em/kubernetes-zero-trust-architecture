@@ -44,3 +44,9 @@
   bind clusterroles              no
   impersonate users              no
   * * -A                         
+--- Contrôle corrigé : tous les verbes sur toutes les ressources (* *)
+  system:serviceaccount:zt-frontend:sa-frontend : no
+  system:serviceaccount:zt-api:sa-api : no
+  system:serviceaccount:zt-data:sa-database : no
+  system:serviceaccount:zt-attacker:sa-attacker : no
+  system:serviceaccount:zt-data:eso-vault : no

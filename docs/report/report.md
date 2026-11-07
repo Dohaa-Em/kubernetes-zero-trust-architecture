@@ -103,7 +103,17 @@ and Hubble shows the `Policy denied DROPPED` verdict
 
 ### 4.2 RBAC and identities (A)
 
-> **TODO (A):** table permission / component / reason, and list of dangerous permissions checked.
+**ServiceAccounts and permissions.** The repository grants no Role or RoleBinding to the application accounts. Least privilege here means zero Kubernetes permissions, because no component of the application talks to the Kubernetes API.
+
+| ServiceAccount | Component | Kubernetes permissions | Token mounted | Reason |
+| --- | --- | --- | --- | --- |
+| `sa-frontend` (`zt-frontend`) | Frontend (nginx) | none | no | Serves HTTP and calls the API over the network only |
+| `sa-api` (`zt-api`) | API | none | no | Reaches the database over the network only |
+| `sa-database` (`zt-data`) | Database | none | no | PostgreSQL needs no cluster access |
+| `sa-attacker` (`zt-attacker`) | Simulation of a compromised pod | none | no | Any right would invalidate scenarios S1 to S4 |
+| `eso-vault` (`zt-data`) | Used by the External Secrets Operator to authenticate to Vault | none | no | ESO requests a short-lived token for it (TokenRequest); the account holds no right itself |
+
+**Dangerous permissions checked** (`docs/evidence/rbac/dangerous-permissions-zt-lab-a.txt`, `kubectl auth can-i --as=...` for the five accounts): read Secrets in all namespaces, create pods, `pods/exec`, create RoleBindings, `escalate` and `bind` on ClusterRoles, `impersonate` users and any verb on any resource (`* *`). Every answer is `no`.
 
 Measured effect (`docs/evidence/rbac/`): the baseline `edit` binding is removed, tokens
 are no longer mounted (`automountServiceAccountToken: false` on every ServiceAccount
@@ -113,7 +123,27 @@ denied. S2 and S4 are closed at the Kubernetes API level.
 
 ### 4.3 Network: NetworkPolicy and Cilium (A)
 
-> **TODO (A):** flow matrix and Hubble captures of each blocked flow.
+**Flow matrix.**
+
+| Flow | Policy | Result | Proof |
+| --- | --- | --- | --- |
+| frontend → API, TCP 9898 | `allow-frontend-to-api-egress` and `-ingress` | allowed | Hubble `FORWARDED` |
+| API → database, TCP 5432 | `allow-api-to-database-egress` and `-ingress` | allowed | policy in `network/20-allow-api-to-database.yaml` |
+| application pods → CoreDNS, port 53 | `allow-dns-egress` | allowed | policy in `network/00-default-deny-and-dns.yaml` |
+| frontend → database | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
+| frontend → Kubernetes API (node `10.0.2.15:6443`) | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
+| frontend → Internet (`1.1.1.1:443`) | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
+
+Hubble captures from the compromised frontend (`docs/evidence/network/hubble-frontend-flows-zt-lab-a.txt`):
+
+```
+Nov  7 18:54:00.540: zt-frontend/frontend-5d9d6df54-tkphc:38409 <> zt-data/database-55f4778c8d-wwt6l:5432 policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:00.540: zt-frontend/frontend-5d9d6df54-tkphc:38409 <> zt-data/database-55f4778c8d-wwt6l:5432 Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:03.342: zt-frontend/frontend-5d9d6df54-tkphc:36489 <> 10.0.2.15:6443 (host) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:03.342: zt-frontend/frontend-5d9d6df54-tkphc:36489 <> 10.0.2.15:6443 (host) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:06.236: zt-frontend/frontend-5d9d6df54-tkphc:38193 <> 1.1.1.1:443 (world) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:06.236: zt-frontend/frontend-5d9d6df54-tkphc:38193 <> 1.1.1.1:443 (world) Policy denied DROPPED (TCP Flags: SYN)
+```
 
 Default deny ingress and egress in every application namespace, explicit DNS, then one
 policy per legitimate flow. After this phase the frontend still reaches the API (a
@@ -395,7 +425,7 @@ applications, the **database**, which holds the data and the most valuable crede
 Application workloads need **no Kubernetes API permission at all**: no token is mounted.
 ESO needs read/write on Secrets and a TokenRequest for `eso-vault`. Vault needs
 `system:auth-delegator` to validate tokens. Falco needs read access to the runtime socket
-and the kernel. Details: section 4.2 (TODO A) and 4.5.
+and the kernel. Details: section 4.2 and 4.5.
 
 **3. What can be reached after a pod is compromised?**
 Measured for the frontend (section 5): in the baseline, every service, the Kubernetes API
@@ -429,7 +459,6 @@ run with lab shortcuts (no TLS, default credentials). Detection is not preventio
 | --- | --- | --- |
 | Whole cluster | Single node: compromising the node defeats every control | Several nodes, node hardening, kube-bench findings |
 | Application | The frontend can still abuse the API (legitimate flow) | Cilium L7 policy in production, API authentication |
-| Admission | Kyverno runs with a single replica: a clean stop removes its webhooks (fail-open), a crash blocks every pod creation for about 30 s (fail-closed) | Three replicas with a PodDisruptionBudget, alert when the webhooks disappear |
 | Admission | Kyverno runs with a single replica: a clean stop removes its webhooks (fail-open), a crash blocks every pod creation for about 30 s (fail-closed) | Three replicas with a PodDisruptionBudget, alert when the webhooks disappear |
 | Network | No pod-to-pod encryption (WireGuard shown only as an option) | Cilium transparent encryption, or a service mesh with mTLS |
 | Secrets | ESO controller has cluster-wide access to Secrets; pods keep old passwords until restart | Scoped ESO, Vault dynamic database credentials, automatic restart |
