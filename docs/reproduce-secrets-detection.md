@@ -64,7 +64,9 @@ also forces an ESO resync.
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io && helm repo update
 helm install external-secrets external-secrets/external-secrets \
-  -n external-secrets --create-namespace --version 2.14.0 --set installCRDs=true
+  -n external-secrets --create-namespace --version 2.14.0 --set installCRDs=true \
+  --set scopedRBAC=true --set scopedNamespace=zt-data \
+  --set processClusterStore=false --set processClusterExternalSecret=false --set processClusterGenerator=false
 kubectl -n external-secrets wait --for=condition=Ready pod --all --timeout=5m
 
 kubectl apply -f secrets/10-secretstore.yaml

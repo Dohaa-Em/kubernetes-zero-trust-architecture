@@ -1,0 +1,17 @@
+## A1 : ESO restreint a zt-data (zt-lab-a, 2026-11-07T23:22:10+02:00)
+### AVANT
+get secrets kube-system : yes
+get secrets vault : yes
+get secrets zt-api : yes
+get secrets zt-data : yes
+### APRES (ESO synchronise : yes)
+get secrets kube-system : no
+get secrets vault : no
+get secrets zt-api : no
+get secrets zt-data : yes
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    2s
+NAME                                               READY   STATUS    RESTARTS   AGE
+external-secrets-78d878d8b9-9m2bn                  1/1     Running   0          18s
+external-secrets-cert-controller-d689c69c6-xvxc2   1/1     Running   0          34m
+external-secrets-webhook-5889666874-9zvjb          1/1     Running   0          34m
