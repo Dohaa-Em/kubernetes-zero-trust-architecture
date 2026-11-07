@@ -1,0 +1,8 @@
+## A2 : exclusion docker-entrypoint (zt-lab-a, 2026-11-07T23:26:27+02:00)
+### AVANT correction
+temoin (sh -c id) : alertes = 1  (attendu >= 1)
+contournement (echo docker-entrypoint) : alertes en 1 min = 1
+### APRES correction (startswith "/bin/sh /docker-entrypoint")
+temoin : alertes = 1  (attendu >= 1)
+contournement echo docker-entrypoint : alertes = 1  (attendu >= 1, corrige)
+demarrage nginx frontend (ns=zt-frontend) : alertes = 0  (attendu 0, pas de faux positif)
