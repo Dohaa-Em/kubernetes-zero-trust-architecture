@@ -350,7 +350,7 @@ and pod after the change.
 **Limits.**
 - Falco detects but **does not block**. It complements prevention, it does not replace it.
 - The shell rule watches shell names only: `curl`, `wget` or `nc` run directly through `kubectl exec` raise no Falco alert. The audit log still records every `exec` with its command (A3).
-- The shell rule first excluded any command containing `docker-entrypoint`, so an attacker could evade it by writing that string into his own command (A2, found by A). The exclusion is now anchored at the start of the command line: the bypass alerts and container starts stay silent on both clusters (`docs/evidence/review/retest-a1-a2-zt-lab-b.txt`).
+- The shell rule first excluded any command containing `docker-entrypoint`, so an attacker could evade it by writing that string into his own command (A2, found by A). Container starts launch no shell (0 alert on both clusters), so the exclusion was removed: the bypass now alerts (`docs/evidence/detection/a2-docker-entrypoint-zt-lab-a.txt`, `docs/evidence/review/retest-a1-a2-zt-lab-b.txt`).
 - The Falco pod is privileged, with kernel access and the containerd socket: it is a new, high-value attack surface.
 - The probe exception is based on the command line: an attacker who includes `vault status` in a command evades the Vault shell rule.
 - The Falcosidekick UI no longer accepts the chart's default `admin:admin`: its credentials come from a Secret created by hand, outside Git (`falcosidekick-ui-credentials`). The chart's own Secret still contains the default value and is overridden only because ours is loaded last (Kubernetes `envFrom` precedence). `admin:admin` must be re-tested after every chart upgrade (`docs/evidence/detection/ui-credentials-zt-lab-b.txt`).
