@@ -84,5 +84,5 @@ kyverno test admission/tests/
 
 ## Status
 - Phases 0 to 4 done by Abir Majdi on zt-lab-a (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno).
-- Phases 5 and 6 done by Doha El Merabet on zt-lab-b (Vault, External Secrets, API audit, etcd encryption, Falco).
+- Phases 5 and 6 done by Doha El Merabet on zt-lab-b (Vault, External Secrets, API audit, Secret encryption at rest, Falco).
 - Integration (phase 7) done on both clusters (tag `v0.9-integration`): API audit, Secret encryption at rest (SQLite datastore), Vault and External Secrets, Falco with five MITRE-tagged rules, and the Kyverno policy allowing Secrets in zt-data only from External Secrets Operator (admission/70). S1-S4 replayed with all layers active on zt-lab-a and zt-lab-b (docs/evidence/integration, blast-radius grid updated). kube-bench v0.16.0 (59 passed, 4 findings analysed) and Kubescape v4.0.20 (no failed control left on the zt-* namespaces) in docs/evidence/final. Cross-reviews found and fixed two real defects: initContainers bypassing three Kyverno policies (R1) and Secrets in zt-data still modifiable by the admin (R10). Fail-open and fail-closed behaviour of Kyverno measured (docs/evidence/fail-mode). Next: Trivy image scan and architecture diagrams (Doha), rebuild from scratch with the README alone (#24), final synthesis and report.
