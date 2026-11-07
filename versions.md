@@ -18,7 +18,7 @@ Les deux membres installent exactement ces versions. Toujours donner la version 
 | Falcosidekick | 2.35.1 | interface 2.2.0, 1 réplica |
 | Vault | chart 0.34.1 | application 2.0.4, Raft, 1 réplica |
 | External Secrets Operator | chart 2.14.0 | API external-secrets.io/v1 |
-| kube-bench | à renseigner (Doha) | |
+| kube-bench | 0.16.0 | profil k3s-cis-1.9 |
 
 ## Machines
 

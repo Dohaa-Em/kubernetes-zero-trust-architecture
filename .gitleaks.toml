@@ -1,0 +1,11 @@
+# Configuration Gitleaks du dépôt : règles par défaut + une exception documentée.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """Noms de pods générés par Kubernetes (<deployment>-<hash ReplicaSet>-<suffixe>),
+par exemple api-6d8d6f9c7d-vjm6v dans les sorties kube-bench : la règle generic-api-key
+les prend pour une clé à cause du mot "api" suivi d'un suffixe aléatoire. Seule une valeur
+exactement au format d'un nom de pod est ignorée ; tout le reste du fichier reste analysé."""
+regexTarget = "secret"
+regexes = ['''^[a-z0-9]([a-z0-9-]*[a-z0-9])?-[a-z0-9]{8,10}-[a-z0-9]{5}$''']
