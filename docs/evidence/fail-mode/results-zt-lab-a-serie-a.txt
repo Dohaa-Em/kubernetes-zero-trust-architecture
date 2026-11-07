@@ -1,0 +1,30 @@
+=== Fail-open / fail-closed Kyverno, serie A : arret propre - zt-lab-a - 2026-11-07T20:34:34+02:00
+### 1. Controleur ACTIF (temoin)
+-- ok (ghcr.io/stefanprodan/podinfo:6.7.1)
+pod/ok created (server dry run)
+-- bad (ghcr.io/stefanprodan/podinfo:latest)
+Error from server: error when creating "STDIN": admission webhook "validate.kyverno.svc-fail" denied the request: 
+resource Pod/zt-attacker/bad was blocked due to the following policies 
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/containers/0/image/'
+### 2. Controleur ARRETE (kubectl scale --replicas=0)
+deployment.apps/kyverno-admission-controller scaled
+pod/kyverno-admission-controller-56f46df676-689n9 condition met
+arret confirme (UTC) : 18:34:39
+webhooks Kyverno encore presents : 2
+-- ok (ghcr.io/stefanprodan/podinfo:6.7.1)
+pod/ok created (server dry run)
+-- bad (ghcr.io/stefanprodan/podinfo:latest)
+pod/bad created (server dry run)
+### 3. RETABLISSEMENT
+deployment.apps/kyverno-admission-controller scaled
+Waiting for deployment "kyverno-admission-controller" rollout to finish: 0 of 1 updated replicas are available...
+deployment "kyverno-admission-controller" successfully rolled out
+protection revenue 9 s apres la fin du rollout
+-- ok (ghcr.io/stefanprodan/podinfo:6.7.1)
+pod/ok created (server dry run)
+-- bad (ghcr.io/stefanprodan/podinfo:latest)
+Error from server: error when creating "STDIN": admission webhook "validate.kyverno.svc-fail" denied the request: 
+resource Pod/zt-attacker/bad was blocked due to the following policies 
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/containers/0/image/'

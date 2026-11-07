@@ -1,0 +1,22 @@
+=== Fail-open / fail-closed Kyverno, serie B : plantage du controleur (kill force) - zt-lab-a - 2026-11-07T20:41:35+02:00
+### temoin actif : ok=ACCEPTE bad=REFUSE_PAR_LA_POLITIQUE
+kill force (UTC) : 18:41:36
+pod "kyverno-admission-controller-56f46df676-6qmxq" force deleted
+18:41:37  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Init:0/1,
+18:41:42  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Init:0/1,
+18:41:45  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Init:0/1,
+18:41:48  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Init:0/1,
+18:41:53  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Init:0/1,
+18:41:57  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Running,
+18:42:03  ok=REFUSE_WEBHOOK_INJOIGNABLE  bad=REFUSE_WEBHOOK_INJOIGNABLE  webhooks=10  pod=0/1 Running,
+18:42:09  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:14  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:19  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:24  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:29  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:34  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:39  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+18:42:44  ok=ACCEPTE  bad=REFUSE_PAR_LA_POLITIQUE  webhooks=10  pod=1/1 Running,
+### etat final :
+NAME                                            READY   STATUS    RESTARTS   AGE
+kyverno-admission-controller-56f46df676-9d627   1/1     Running   0          72s
