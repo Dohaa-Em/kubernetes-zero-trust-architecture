@@ -1,0 +1,11 @@
+## Flux API -> base (zt-lab-a, 2026-11-08T00:03:29+02:00)
+### API -> database.zt-data.svc:5432 (attendu : ouvert)
+Connection to database.zt-data.svc (10.43.186.94) 5432 port [tcp/postgresql] succeeded!
+### frontend -> database.zt-data.svc:5432 (attendu : bloque)
+nc: database.zt-data.svc (10.43.186.94:5432): Operation timed out
+rc=1
+### Hubble, flux vers la base (5432) depuis le pod API
+Nov  7 22:03:30.354: zt-api/api-69dcbc6d54-gxfnn:50032 (ID:22024) -> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) to-endpoint FORWARDED (TCP Flags: ACK)
+Nov  7 22:03:30.360: zt-api/api-69dcbc6d54-gxfnn:50032 (ID:22024) -> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) to-endpoint FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 22:03:30.376: zt-api/api-69dcbc6d54-gxfnn:50032 (ID:22024) <- zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) to-endpoint FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 22:03:30.376: zt-api/api-69dcbc6d54-gxfnn:50032 (ID:22024) -> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) to-endpoint FORWARDED (TCP Flags: ACK)

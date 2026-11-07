@@ -128,11 +128,17 @@ denied. S2 and S4 are closed at the Kubernetes API level.
 | Flow | Policy | Result | Proof |
 | --- | --- | --- | --- |
 | frontend → API, TCP 9898 | `allow-frontend-to-api-egress` and `-ingress` | allowed | Hubble `FORWARDED` |
-| API → database, TCP 5432 | `allow-api-to-database-egress` and `-ingress` | allowed | policy in `network/20-allow-api-to-database.yaml` |
+| API → database, TCP 5432 | `allow-api-to-database-egress` and `-ingress` | allowed | `nc` from the API pod succeeds, the same test from the frontend times out; Hubble `FORWARDED` (`docs/evidence/network/api-to-database-zt-lab-a.txt`) |
 | application pods → CoreDNS, port 53 | `allow-dns-egress` | allowed | policy in `network/00-default-deny-and-dns.yaml` |
 | frontend → database | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
 | frontend → Kubernetes API (node `10.0.2.15:6443`) | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
 | frontend → Internet (`1.1.1.1:443`) | none (default deny) | **blocked** | Hubble `EGRESS DENIED`, `DROPPED` |
+| External Secrets Operator → Vault, TCP 8200 | `network/40-vault-eso.yaml` | allowed | ExternalSecret stays `SecretSynced` |
+| attacker pod → Vault, TCP 8200 | none (default deny) | **blocked** | request times out (`http=000`, exit code 28) |
+| Falco → Falcosidekick | `network/50-falco.yaml` | allowed | a new alert reaches the UI (`WebUI - POST OK (200)`) |
+| Falco → Internet, TCP 443 | `network/50-falco.yaml` | allowed (limit) | rules download by `falcoctl`; any destination is allowed |
+
+Proofs for the last four rows: `docs/evidence/network-vault-falco/` (both clusters).
 
 Hubble captures from the compromised frontend (`docs/evidence/network/hubble-frontend-flows-zt-lab-a.txt`):
 
@@ -152,6 +158,8 @@ legitimate flow) but no longer the database, the Kubernetes API or the Internet
 (`GET /healthz` forwarded, `GET /version` denied). It is kept as a demonstration only, to
 avoid tying every flow to Cilium (`docs/architecture-networkpolicy-vs-cilium.md`).
 
+**Limits.** No policy allows ingress to the frontend: it is reachable only through `kubectl port-forward`, which goes through the kubelet and is not filtered by NetworkPolicy, so the "Internet → frontend" boundary is not really exercised (R4). The DNS egress rule lets a pod query CoreDNS for any name, and CoreDNS also resolves external names: DNS tunnelling remains a possible exfiltration channel (R6). A Cilium DNS rule limited to `*.cluster.local` would reduce it.
+
 ### 4.4 Admission: Pod Security Admission and Kyverno (A)
 
 **Failure modes.** All Kyverno webhooks use `failurePolicy: Fail`, and the lab runs a single admission-controller replica. We measured two opposite behaviours (`docs/evidence/fail-mode/analysis.md`). When the controller is stopped cleanly (`scale --replicas=0`), Kyverno removes its resource webhooks (10 webhook configurations drop to 2) and a pod using the `latest` tag is admitted: the cluster is fail-open. When the controller crashes (pod killed with `--force --grace-period=0`), the webhooks stay registered, so the API server applies `Fail`: every pod creation, legitimate or not, is refused for about 30 seconds until the new pod is ready: the cluster is fail-closed. After a clean restart, protection came back 9 seconds after the rollout finished. A single replica therefore means that a clean stop removes the controls and a crash briefly blocks new pods. Three replicas with a PodDisruptionBudget are the usual mitigation; this was not tested on the single-node VM.
@@ -160,14 +168,18 @@ avoid tying every flow to Cilium (`docs/architecture-networkpolicy-vs-cilium.md`
 
 | Policy | Type | Mode | Effect |
 | --- | --- | --- | --- |
-| `best-practices-disallow-latest-tag` | validate | Enforce | Refuses images without a tag or with `latest` |
-| `best-practices-require-limits` | validate | Enforce | Requires CPU and memory limits |
-| `supply-chain-restrict-images` | validate | Enforce | Image allowlist: `ghcr.io/stefanprodan/*`, `nginxinc/nginx-unprivileged`, `postgres`, `curlimages/curl` |
+| `best-practices-disallow-latest-tag` | validate | Enforce | Refuses images without a tag or with `latest`, in containers and initContainers |
+| `best-practices-require-limits` | validate | Enforce | Requires CPU and memory limits on containers and initContainers |
+| `supply-chain-restrict-images` | validate | Enforce | Image allowlist: `ghcr.io/stefanprodan/*`, `nginxinc/nginx-unprivileged`, `postgres`, `curlimages/curl`, for containers and initContainers |
 | `defaults-mutate-pod-defaults` | mutate | n/a | Adds secure defaults to pods |
 | `defaults-generate-default-deny` | generate | n/a | Creates a default-deny NetworkPolicy in every new `zt-*` namespace |
-| `secrets-only-from-eso` | validate | Enforce | Only the External Secrets Operator ServiceAccount may write Secrets in `zt-data` |
+| `secrets-only-from-eso` | validate | Enforce | Only the External Secrets Operator ServiceAccount may create or update Secrets in `zt-data`; `allowExistingViolations: false`, so an existing Secret cannot be edited by anyone else either |
 
 The policies apply to the `zt-*` namespaces only (evidence: `docs/evidence/admission-kyverno/`, `docs/evidence/kyverno-extra/`, `docs/evidence/secrets-policy/`).
+
+**Gaps found by cross-review.** The review by Doha El Merabet found two real holes in our own policies. Both were fixed and retested on both clusters. initContainers escaped the tag, limits and allowlist rules (R1, commit `8441fdf`, `docs/evidence/review/`). A Secret in `zt-data` could still be modified by the administrator, because Kyverno tolerates existing violations by default (`allowExistingViolations: true` since version 1.13); `allowExistingViolations: false` closes it (R10, commit `8ca98b2`, `docs/evidence/secrets-policy/r10-fix-zt-lab-a.txt`). Finding such holes by review is an argument for the method.
+
+**Limits that remain.** Ephemeral containers (`kubectl debug`) go through a subresource that the Pod CREATE rules do not match, so the image rules do not validate them. The mutation `+(automountServiceAccountToken): false` only applies when the field is absent: a pod that sets it to `true` keeps its token (seen with `detection/tests/token-reader-pod.yaml`), so it is a safe default and not a control (R8). The ClusterRole given to Kyverno's background controller to generate the default deny can also delete NetworkPolicies in the whole cluster: compromising Kyverno would erase the default deny (R9).
 
 **Rollout.** The policies were written and tested on a lab with no existing workload, so they went to `Enforce` directly (commit `961d229`, 3 November). We did not run an `Audit` phase. On a production cluster the usual path is `Audit`, review of the policy reports, then `Enforce`, so that existing workloads are not blocked.
 
@@ -468,8 +480,9 @@ run with lab shortcuts (no TLS, default credentials). Detection is not preventio
 | Whole cluster | Single node: compromising the node defeats every control | Several nodes, node hardening, kube-bench findings |
 | Application | The frontend can still abuse the API (legitimate flow) | Cilium L7 policy in production, API authentication |
 | Admission | Kyverno runs with a single replica: a clean stop removes its webhooks (fail-open), a crash blocks every pod creation for about 30 s (fail-closed) | Three replicas with a PodDisruptionBudget, alert when the webhooks disappear |
-| Network | No pod-to-pod encryption (WireGuard shown only as an option) | Cilium transparent encryption, or a service mesh with mTLS |
-| Secrets | ESO controller has cluster-wide access to Secrets; pods keep old passwords until restart | Scoped ESO, Vault dynamic database credentials, automatic restart |
+| Admission (scope) | Ephemeral containers escape the image rules; Kyverno's background controller can delete NetworkPolicies cluster-wide; the token mutation is a default, not a control | A rule on the `ephemeralcontainers` subresource, narrower generate permissions, a validate rule on `automountServiceAccountToken` |
+| Network | No pod-to-pod encryption (WireGuard shown only as an option); the frontend is reachable only through `kubectl port-forward`; DNS can carry exfiltration | Cilium transparent encryption, or a service mesh with mTLS; a Cilium DNS rule; a real ingress |
+| Secrets | ESO is scoped to `zt-data` since the review (A1) but can still write every Secret there; pods keep old passwords until restart | Vault dynamic database credentials, automatic restart |
 | Vault | TLS off, one unseal key, root token on the admin machine | TLS, auto-unseal with a KMS, revoke the root token after setup |
 | Encryption at rest | Key stored on the same node | KMS provider |
 | Audit | Log kept on the node only | Ship to a SIEM |
