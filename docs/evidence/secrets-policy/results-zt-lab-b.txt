@@ -1,0 +1,23 @@
+=== Secrets only from ESO - zt-lab-b - 2026-11-07T19:59:18+01:00
+--- 1. Creation manuelle (doit etre refusee) :
+error: failed to create secret admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Secret/zt-data/manual-test was blocked due to the following policies 
+
+secrets-only-from-eso:
+  deny-secrets-not-written-by-eso: Secrets in zt-data may only be written by the External Secrets Operator.
+--- 2. Modification manuelle de db-creds par l'administrateur (doit etre refusee) :
+secret/db-creds annotated
+--- 3. ESO continue de synchroniser (doit rester SecretSynced) :
+externalsecret.external-secrets.io/db-creds annotated
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    11s
+--- 4. Rotation complete : ESO ecrit le nouveau mot de passe, la politique le laisse passer :
+Empreinte AVANT  (Secret k8s) : 825fcef8f3142fd4
+Empreinte cible  (nouveau)    : 30dc6e2fd29804e7
+1. PostgreSQL : mot de passe changé
+2. Vault : nouvelle version écrite
+3. ESO : Secret synchronisé en 0s
+Empreinte APRES  (Secret k8s) : 30dc6e2fd29804e7
+4. Connexion TCP avec le mot de passe venant de Vault/ESO : OK
+code de sortie : 0
