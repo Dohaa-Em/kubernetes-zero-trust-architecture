@@ -1,0 +1,24 @@
+=== Retest A1 et A2 (relecture d'Abir) sur zt-lab-b - 2026-11-07T21:40:42+01:00 - commit 77d61bc
+--- A1 AVANT : lecture des Secrets par le contrôleur ESO
+get secrets -n kube-system : yes
+get secrets -n vault : yes
+get secrets -n zt-api : yes
+get secrets -n zt-data : yes
+--- A1 APRÈS (scopedRBAC, scopedNamespace=zt-data) :
+get secrets -n kube-system : no
+get secrets -n vault : no
+get secrets -n zt-api : no
+get secrets -n zt-data : yes
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    11s
+1. PostgreSQL : mot de passe changé
+2. Vault : nouvelle version écrite
+3. ESO : Secret synchronisé en 0s
+4. Connexion TCP avec le mot de passe venant de Vault/ESO : OK
+rotation, code de sortie : 0
+--- A2 AVANT (ancienne règle 'contains', mesuré à 21:25 sur zt-lab-b, fenêtre de 30 s sans autre test) : 0 alerte = contournement
+--- A2 APRÈS (règle d'Abir 'startswith') : contournement 'echo docker-entrypoint' (doit alerter) :
+database-ccd7b6d85-f5rsw	sh -c read -r PGPASSWORD || true; export PGPASSWORD; psql -h 127.0.0.1 -U appuser -d appdb -tAc "select 1"
+frontend-546f448bdd-p75lm	sh -c echo docker-entrypoint; id
+--- A2 APRÈS : redémarrage du frontend (doit donner 0 alerte du NOUVEAU pod) :
+nouveau pod frontend-6df6954fb5-nbplt : 0 alerte(s)
