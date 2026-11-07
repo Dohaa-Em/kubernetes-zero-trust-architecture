@@ -132,8 +132,8 @@ All application namespaces enforce Pod Security `restricted`, which rejects the 
 privileged/hostPath pod even before Kyverno is involved. Kyverno adds what PSA cannot
 express: no `latest` tag, mandatory resource limits, an image allowlist, mutation of
 secure defaults, and generation of a default-deny NetworkPolicy for every new `zt-*`
-namespace (with the ClusterRole that Kyverno's background controller needs for it). A documented PolicyException covers system namespaces
-(`admission/`, `docs/evidence/admission-*`).
+namespace (with the ClusterRole that Kyverno's background controller needs for it). A documented PolicyException (`admission/60-policy-exception.yaml`) allows the `latest` tag only for
+test pods named `latest-exception-*` in `zt-attacker`, for the policy `best-practices-disallow-latest-tag`; its evidence is in `docs/evidence/kyverno-extra/`.
 
 ### 4.5 Secrets: Vault and External Secrets Operator (B)
 
