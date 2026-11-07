@@ -376,7 +376,11 @@ The integration row is the replay of S1–S4 on `zt-lab-a` with every layer acti
 (`docs/evidence/integration/`). It shows that adding Vault, ESO and Falco did not weaken
 any earlier control.
 
-> **TODO (B, phase 7):** same replay on `zt-lab-b` once Kyverno is installed there.
+The same replay on `zt-lab-b` (Ubuntu 24.04, kernel 6.14) gives an **identical** result,
+line by line (`docs/evidence/integration/results-zt-lab-b.md`). Integration surfaced one
+undocumented manual step: Kyverno chart 3.9.2 disables PolicyExceptions by default, so
+`features.policyExceptions.enabled=true` and `features.policyExceptions.namespace=kyverno`
+must be set at install time for `admission/60-policy-exception.yaml` to work.
 
 ## 6. Compliance
 
