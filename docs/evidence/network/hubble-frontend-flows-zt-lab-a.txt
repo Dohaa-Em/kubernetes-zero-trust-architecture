@@ -1,0 +1,31 @@
+=== Flux depuis le frontal (zt-frontend/frontend-5d9d6df54-tkphc) - zt-lab-a - 2026-11-07T20:53:58+02:00
+api.zt-api.svc:9898 -> ATTEIGNABLE
+database.zt-data.svc:5432 -> bloque
+kubernetes.default.svc:443 -> bloque
+1.1.1.1:443 -> bloque
+--- Hubble : refus et passages
+Nov  7 18:53:59.639: zt-frontend/frontend-5d9d6df54-tkphc:36529 (ID:26834) <- zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) to-endpoint FORWARDED (TCP Flags: SYN, ACK)
+Nov  7 18:53:59.639: zt-frontend/frontend-5d9d6df54-tkphc:36529 (ID:26834) -> zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) to-endpoint FORWARDED (TCP Flags: ACK)
+Nov  7 18:53:59.643: zt-frontend/frontend-5d9d6df54-tkphc:36529 (ID:26834) -> zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) to-endpoint FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 18:53:59.643: zt-frontend/frontend-5d9d6df54-tkphc:36529 (ID:26834) <- zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) to-endpoint FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 18:53:59.643: zt-frontend/frontend-5d9d6df54-tkphc:36529 (ID:26834) -> zt-api/api-68697c9d8b-nm8ws:9898 (ID:22024) to-endpoint FORWARDED (TCP Flags: ACK)
+Nov  7 18:54:00.540: zt-frontend/frontend-5d9d6df54-tkphc:38409 (ID:26834) <> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:00.540: zt-frontend/frontend-5d9d6df54-tkphc:38409 (ID:26834) <> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:01.543: zt-frontend/frontend-5d9d6df54-tkphc:38409 (ID:26834) <> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:01.543: zt-frontend/frontend-5d9d6df54-tkphc:38409 (ID:26834) <> zt-data/database-55f4778c8d-wwt6l:5432 (ID:3427) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:03.342: zt-frontend/frontend-5d9d6df54-tkphc:36489 (ID:26834) <> 10.0.2.15:6443 (host) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:03.342: zt-frontend/frontend-5d9d6df54-tkphc:36489 (ID:26834) <> 10.0.2.15:6443 (host) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:04.361: zt-frontend/frontend-5d9d6df54-tkphc:36489 (ID:26834) <> 10.0.2.15:6443 (host) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:04.361: zt-frontend/frontend-5d9d6df54-tkphc:36489 (ID:26834) <> 10.0.2.15:6443 (host) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:06.236: zt-frontend/frontend-5d9d6df54-tkphc:38193 (ID:26834) <> 1.1.1.1:443 (world) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:06.236: zt-frontend/frontend-5d9d6df54-tkphc:38193 (ID:26834) <> 1.1.1.1:443 (world) Policy denied DROPPED (TCP Flags: SYN)
+Nov  7 18:54:06.827: 10.42.0.99:55496 (host) -> zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-endpoint FORWARDED (TCP Flags: SYN)
+Nov  7 18:54:06.829: 10.42.0.99:55496 (host) <- zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-stack FORWARDED (TCP Flags: SYN, ACK)
+Nov  7 18:54:06.830: 10.42.0.99:55496 (host) -> zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-endpoint FORWARDED (TCP Flags: ACK)
+Nov  7 18:54:06.833: 10.42.0.99:55496 (host) <- zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-stack FORWARDED (TCP Flags: ACK, PSH)
+Nov  7 18:54:06.833: 10.42.0.99:55496 (host) -> zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-endpoint FORWARDED (TCP Flags: ACK, PSH)
+Nov  7 18:54:06.833: 10.42.0.99:55496 (host) <- zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-stack FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 18:54:06.833: 10.42.0.99:55496 (host) -> zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-endpoint FORWARDED (TCP Flags: ACK, FIN)
+Nov  7 18:54:06.834: 10.42.0.99:55496 (host) <- zt-frontend/frontend-5d9d6df54-tkphc:8080 (ID:26834) to-stack FORWARDED (TCP Flags: ACK)
+Nov  7 18:54:07.239: zt-frontend/frontend-5d9d6df54-tkphc:38193 (ID:26834) <> 1.1.1.1:443 (world) policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
+Nov  7 18:54:07.240: zt-frontend/frontend-5d9d6df54-tkphc:38193 (ID:26834) <> 1.1.1.1:443 (world) Policy denied DROPPED (TCP Flags: SYN)

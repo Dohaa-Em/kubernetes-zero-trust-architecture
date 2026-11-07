@@ -1,0 +1,46 @@
+=== Permissions dangereuses par ServiceAccount - zt-lab-a - 2026-11-07T20:53:44+02:00
+--- system:serviceaccount:zt-frontend:sa-frontend
+  get secrets -A                 no
+  create pods -n zt-frontend     no
+  create pods/exec -n zt-frontend no
+  create rolebindings -n zt-frontend no
+  escalate clusterroles          no
+  bind clusterroles              no
+  impersonate users              no
+  * * -A                         
+--- system:serviceaccount:zt-api:sa-api
+  get secrets -A                 no
+  create pods -n zt-api          no
+  create pods/exec -n zt-api     no
+  create rolebindings -n zt-api  no
+  escalate clusterroles          no
+  bind clusterroles              no
+  impersonate users              no
+  * * -A                         
+--- system:serviceaccount:zt-data:sa-database
+  get secrets -A                 no
+  create pods -n zt-data         no
+  create pods/exec -n zt-data    no
+  create rolebindings -n zt-data no
+  escalate clusterroles          no
+  bind clusterroles              no
+  impersonate users              no
+  * * -A                         
+--- system:serviceaccount:zt-attacker:sa-attacker
+  get secrets -A                 no
+  create pods -n zt-attacker     no
+  create pods/exec -n zt-attacker no
+  create rolebindings -n zt-attacker no
+  escalate clusterroles          no
+  bind clusterroles              no
+  impersonate users              no
+  * * -A                         
+--- system:serviceaccount:zt-data:eso-vault
+  get secrets -A                 no
+  create pods -n zt-data         no
+  create pods/exec -n zt-data    no
+  create rolebindings -n zt-data no
+  escalate clusterroles          no
+  bind clusterroles              no
+  impersonate users              no
+  * * -A                         
