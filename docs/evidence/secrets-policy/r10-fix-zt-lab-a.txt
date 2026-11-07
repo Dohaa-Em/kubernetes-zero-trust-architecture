@@ -1,0 +1,10 @@
+## R10 apres correction allowExistingViolations: false (zt-lab-a, 2026-11-07T22:48:08+02:00)
+### Test 1 : admin modifie db-creds (attendu : refuse par Kyverno)
+resource Secret/zt-data/db-creds was blocked due to the following policies 
+
+secrets-only-from-eso:
+  deny-secrets-not-written-by-eso: Secrets in zt-data may only be written by the External Secrets Operator.
+### Test 2 : ESO resynchronise (attendu : SecretSynced)
+externalsecret.external-secrets.io/db-creds annotated
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    15s
