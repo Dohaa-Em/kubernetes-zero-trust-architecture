@@ -9,7 +9,7 @@
 | Clusters | `zt-lab-a` (Debian 13), `zt-lab-b` (Ubuntu 24.04), k3s v1.36.5+k3s1, single node |
 | Writing | B (this document), review by A |
 | Status | Updated 8 November 2026. Complete: cross-review (A and B), demo video, tag `v1.0.0`. |
-| Demo video | VIDEO_LINK_HERE |
+| Demo video | https://... |
 
 ---
 
