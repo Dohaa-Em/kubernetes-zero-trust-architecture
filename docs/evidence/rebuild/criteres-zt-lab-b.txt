@@ -1,0 +1,18 @@
+## Criteres de reussite apres reconstruction (zt-lab-b, 2026-11-08T14:09:28+01:00)
+### 3a. R1 : pod avec initContainer alpine:latest (attendu : refuse par Kyverno)
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/initContainers/0/image/'
+best-practices-require-limits:
+  require-cpu-memory-limits: 'validation error: CPU and memory limits are required. rule require-cpu-memory-limits failed at path /spec/initContainers/0/resources/limits/'
+supply-chain-restrict-images:
+  allowed-images-only: 'validation error: Image not in the project allowlist. rule allowed-images-only failed at path /spec/initContainers/0/image/'
+### 3b. R10 : l'admin modifie db-creds (attendu : refuse par Kyverno)
+secrets-only-from-eso:
+  deny-secrets-not-written-by-eso: Secrets in zt-data may only be written by the External Secrets Operator.
+### 4. ESO
+NAME       STORETYPE     STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+db-creds   SecretStore   vault   1m                 SecretSynced   True    45s
+ESO lit kube-system : no
+### 5. Falco
+contournement 'echo docker-entrypoint' : alertes = 1  (attendu >= 1)
+demarrage frontend (ns=zt-frontend) : alertes = 0  (attendu 0)
