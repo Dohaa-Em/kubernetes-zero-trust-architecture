@@ -1,5 +1,7 @@
 ## Criteres de reussite apres reconstruction (zt-lab-a, 2026-11-08T00:58:55+02:00)
 ### 3a. R1 : pod avec initContainer alpine:latest (attendu : refuse par Kyverno)
+best-practices-disallow-latest-tag:
+  validate-image-tag: 'validation error: Using the ''latest'' tag is not allowed. rule validate-image-tag failed at path /spec/initContainers/0/image/'
 best-practices-require-limits:
   require-cpu-memory-limits: 'validation error: CPU and memory limits are required. rule require-cpu-memory-limits failed at path /spec/initContainers/0/resources/limits/'
 supply-chain-restrict-images:
@@ -15,3 +17,7 @@ ESO lit kube-system : no
 ### 5. Falco
 contournement 'echo docker-entrypoint' : alertes = 1  (attendu >= 1)
 demarrage frontend (ns=zt-frontend) : alertes = 0  (attendu 0)
+
+# Note 2026-11-08 15:29 : la ligne disallow-latest-tag manquait dans la capture initiale (sortie tronquee).
+# Rejouee sur zt-lab-a avec kubectl apply --dry-run=server -f docs/evidence/review/initcontainer-bypass.yaml :
+# les trois politiques refusent le pod, comme sur zt-lab-b. Les deux regles de la politique sont en Enforce.

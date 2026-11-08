@@ -31,6 +31,11 @@ shared names are defined in [`docs/01-interface-contract.md`](docs/01-interface-
 Secrets, audit, encryption and detection steps (Vault, ESO, Falco) are detailed in
 [`docs/reproduce-secrets-detection.md`](docs/reproduce-secrets-detection.md).
 
+Prerequisites on a fresh VM (found by the rebuilds on both clusters): `curl`, `openssl`, Helm 3
+(tested with v3.22.1), the Cilium CLI (v0.20.2) and the Kyverno CLI **1.19.2**, which is used by
+`kyverno test` in step 7 (release archive `kyverno-cli_v1.19.2_linux_x86_64.tar.gz` from
+https://github.com/kyverno/kyverno/releases). `kubectl` comes with k3s.
+
 ```bash
 # 1. Audit and encryption drop-ins, BEFORE k3s (step 1 of docs/reproduce-secrets-detection.md)
 sudo mkdir -p /etc/rancher/k3s/config.yaml.d /var/lib/rancher/k3s/server/logs
@@ -39,6 +44,8 @@ sudo cp cluster/audit/k3s-audit.yaml /etc/rancher/k3s/config.yaml.d/20-audit.yam
 sudo cp cluster/audit/k3s-secrets-encryption.yaml /etc/rancher/k3s/config.yaml.d/30-secrets-encryption.yaml
 
 # 2. k3s (pinned, without Flannel, kube-proxy network policy or Traefik)
+# on a machine that already ran k3s: sudo /usr/local/bin/k3s-uninstall.sh && sudo rm -rf /etc/cni/net.d, then reboot
+# (the uninstall leaves /etc/cni/net.d, so the node would be Ready before Cilium is installed)
 sudo cp cluster/k3s-config.yaml /etc/rancher/k3s/config.yaml
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.5+k3s1 sh -
 # the file is mode 0600 for root: copy it, do not just export KUBECONFIG
@@ -91,4 +98,4 @@ kyverno test admission/tests/
 ## Status
 - Phases 0 to 4 done by Abir Majdi on zt-lab-a (threat model, baseline, RBAC, Pod Security, NetworkPolicy and Cilium, Kyverno).
 - Phases 5 and 6 done by Doha El Merabet on zt-lab-b (Vault, External Secrets, API audit, Secret encryption at rest, Falco).
-- Integration (phase 7) done on both clusters (tag `v0.9-integration`): API audit, Secret encryption at rest (SQLite datastore), Vault and External Secrets, Falco with five MITRE-tagged rules, and the Kyverno policy allowing Secrets in zt-data only from External Secrets Operator (admission/70). S1-S4 replayed with all layers active on zt-lab-a and zt-lab-b (docs/evidence/integration, blast-radius grid updated). kube-bench v0.16.0 (59 passed, 4 findings analysed) and Kubescape v4.0.20 (no failed control left on the zt-* namespaces) in docs/evidence/final. Cross-reviews found and fixed two real defects: initContainers bypassing three Kyverno policies (R1) and Secrets in zt-data still modifiable by the admin (R10). Fail-open and fail-closed behaviour of Kyverno measured (docs/evidence/fail-mode). Next: Trivy image scan and architecture diagrams (Doha), rebuild from scratch with the README alone (#24), final synthesis and report.
+- Integration (phase 7) done on both clusters (tag `v0.9-integration`): API audit, Secret encryption at rest (SQLite datastore), Vault and External Secrets, Falco with five MITRE-tagged rules, and the Kyverno policy allowing Secrets in zt-data only from External Secrets Operator (admission/70). S1-S4 replayed with all layers active on zt-lab-a and zt-lab-b (docs/evidence/integration, blast-radius grid updated). kube-bench v0.16.0 (59 passed, 4 findings analysed) and Kubescape v4.0.20 (no failed control left on the zt-* namespaces) in docs/evidence/final. Cross-reviews found and fixed two real defects: initContainers bypassing three Kyverno policies (R1) and Secrets in zt-data still modifiable by the admin (R10). Fail-open and fail-closed behaviour of Kyverno measured (docs/evidence/fail-mode). Trivy scan (222 HIGH/CRITICAL, all fixable), architecture diagrams and a rebuild from scratch with the README alone on both VMs (6/6 criteria each) are done. Next: final proofreading, video, tag v1.0.0.
