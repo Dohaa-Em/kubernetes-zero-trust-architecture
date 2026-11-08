@@ -17,9 +17,14 @@ Périmètre : les 4 images de nos namespaces `zt-*`. Les images des composants t
 
 Pour podinfo, les résultats se répartissent ainsi : 23 dans l'OS Alpine, 44 dans le binaire `home/app/podinfo` et 40 dans `usr/local/bin/podcli`. Une même CVE peut apparaître dans les deux binaires Go.
 
-## 1. Constat principal : des images anciennes, pas des failles sans solution
+## 1. Constat principal : des composants anciens, pas des failles sans solution
 
-Toutes les vulnérabilités trouvées ont une version corrigée. La cause est commune : les tags fixés au début du projet (Alpine 3.20/3.21, Go 1.23 pour podinfo) datent de plus d'un an. Ce n'est pas un défaut de configuration du cluster, c'est une **dette de mise à jour**.
+Toutes les vulnérabilités trouvées ont une version corrigée (colonne « Avec correctif »). La cause n'est pas la même selon l'image :
+
+- **nginx-unprivileged, podinfo et curl** : l'OS de base est ancien (Alpine 3.20.3 ou 3.21.3), et pour podinfo les deux binaires Go sont compilés avec Go 1.23.2.
+- **postgres** : l'OS est récent (Alpine 3.24.4) et n'a aucune faille HIGH ou CRITICAL. Les 26 résultats viennent tous d'un seul binaire Go embarqué, `usr/local/bin/gosu` (compilé avec la stdlib Go v1.24.6), que l'entrypoint utilise pour quitter root.
+
+Ce n'est pas un défaut de configuration du cluster, c'est une **dette de mise à jour** des composants livrés dans les images.
 
 ## 2. Vulnérabilités CRITICAL
 
@@ -27,7 +32,7 @@ Toutes les vulnérabilités trouvées ont une version corrigée. La cause est co
 | --- | --- | --- | --- | --- |
 | CVE-2026-31789 | OpenSSL (`libcrypto3`, `libssl3`) | nginx, podinfo, curl | 3.3.2/3.3.3 → 3.3.7 | Trivy la décrit comme un dépassement de tas sur les systèmes **32 bits**. Notre nœud est en x86_64 : risque faible ici, mais à corriger. |
 | CVE-2026-111497 | `brotli-libs` | nginx | 1.1.0 → 1.1.1 | Bibliothèque de compression utilisée par nginx. |
-| CVE-2025-68121 | bibliothèque standard Go | podinfo, postgres | Go 1.23.2 / 1.24.6 → 1.24.13+ | Binaires Go compilés avec une version de Go ancienne. Dans postgres, c'est un binaire Go embarqué dans l'image, pas PostgreSQL lui-même. |
+| CVE-2025-68121 | bibliothèque standard Go | podinfo, postgres | Go 1.23.2 / 1.24.6 → 1.24.13+ | Binaires Go compilés avec une version de Go ancienne. Dans postgres, c'est le binaire `gosu` embarqué dans l'image, pas PostgreSQL lui-même. |
 | CVE-2026-33186 | `google.golang.org/grpc` | podinfo | 1.67.1 → 1.79.3 | Dépendance de podinfo. |
 
 ## 3. Ce que l'architecture Zero Trust limite déjà
