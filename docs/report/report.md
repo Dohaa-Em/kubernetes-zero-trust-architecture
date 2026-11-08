@@ -56,8 +56,7 @@ Names, labels and ports are fixed in `docs/01-interface-contract.md`.
 4. **Application → secrets tooling**: workloads never talk to Vault. Only the ESO controller does, with a dedicated identity.
 5. **Containers → node kernel**: crossed only by Cilium and Falco (eBPF), which are therefore privileged components to protect.
 
-> **TODO (B, phase 8):** architecture diagrams in `docs/architecture/`: before/after,
-> allowed flows, Vault/ESO flows.
+The three architecture diagrams (before/after, allowed flows, Vault/ESO sequence) are in `docs/architecture/README.md`.
 
 ### 2.3 Flows
 
