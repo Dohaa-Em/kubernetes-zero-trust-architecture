@@ -12,7 +12,7 @@ set -euo pipefail
 INIT="${VAULT_INIT_FILE:-$HOME/vault-init.json}"   # HORS du dépôt, droits 600
 PORT=18200
 
-kubectl -n vault wait --for=jsonpath='{.status.phase}'=Running pod/vault-0 --timeout=180s
+kubectl -n vault wait --for=jsonpath='{.status.phase}'=Running pod/vault-0 --timeout=600s
 
 kubectl -n vault port-forward pod/vault-0 ${PORT}:8200 >/dev/null 2>&1 &
 PF=$!
