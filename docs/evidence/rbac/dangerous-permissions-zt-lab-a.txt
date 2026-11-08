@@ -1,3 +1,4 @@
+# Note 2026-11-08 : la verification '* *' du premier bloc est vide, elle est refaite et corrigee a la fin du fichier (bloc 'Controle corrige').
 === Permissions dangereuses par ServiceAccount - zt-lab-a - 2026-11-07T20:53:44+02:00
 --- system:serviceaccount:zt-frontend:sa-frontend
   get secrets -A                 no

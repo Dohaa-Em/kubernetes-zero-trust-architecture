@@ -26,3 +26,9 @@ Décision : acceptés, ces composants ont besoin de ces droits pour fonctionner.
 ## 4. Limites
 - Les namespaces `default` et `kyverno` n'ont pas de default-deny : pistes d'amélioration, hors périmètre des zones Zero Trust `zt-*`.
 - C-0069 et C-0070 non évalués (opérateur requis).
+
+## 5. Contrôles que Kubescape ne peut pas vérifier sur k3s
+Trois contrôles restent en « Action Required » parce que le CLI ne sait pas les évaluer sur k3s (avec C-0069 et C-0070, cela fait les 5 du scan). Le projet les couvre autrement :
+- **Chiffrement des Secrets (etcd)** : vérifié par lecture directe du datastore, marqueur lisible 1 avant et 0 après, AES-CBC (`docs/evidence/etcd-encryption/`).
+- **Journaux d'audit activés** : vérifiés par l'audit lui-même, `exec` tracé, accès refusé en code 403, 0 occurrence du mot de passe (`docs/evidence/audit/`).
+- **PSP (Pod Security Policy)** : supprimé de Kubernetes depuis la version 1.25 et remplacé par Pod Security Admission, en niveau `restricted` sur nos namespaces (rapport, section 4.4).
