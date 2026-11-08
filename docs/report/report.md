@@ -8,7 +8,7 @@
 | Repository | `penelopeeckhar/kubernetes-zero-trust-architecture` |
 | Clusters | `zt-lab-a` (Debian 13), `zt-lab-b` (Ubuntu 24.04), k3s v1.36.5+k3s1, single node |
 | Writing | B (this document), review by A |
-| Status | Updated 8 November 2026. Remaining **TODO**: architecture diagrams, Trivy scan and rebuild on zt-lab-b (B), final synthesis. |
+| Status | Updated 8 November 2026. Remaining **TODO**: final proofreading (A and B), video, tag `v1.0.0`. |
 
 ---
 
@@ -69,6 +69,8 @@ Names, labels and ports are fixed in `docs/01-interface-contract.md`.
 | frontend → database, frontend → Kubernetes API, any pod → Internet | **no** | default deny ingress and egress |
 | ESO → Vault:8200, Vault → kube-apiserver (TokenReview) | yes | `docs/flows-vault-eso.md` |
 | Falco → Falcosidekick:2801 → UI:2802 → Redis:6379 | yes | `docs/flows-falco.md` |
+
+Diagrams of the architecture before and after, of every allowed flow (and the tested refused ones) and of the Vault → ESO → database sequence: `docs/architecture/README.md`.
 
 ## 3. Threat model
 
@@ -405,7 +407,7 @@ although they run different operating systems (Debian 13 and Ubuntu 24.04).
 
 Kubescape v4.0.20 (NSA and MITRE frameworks, 38 of 40 controls evaluated) found one real defect on our workloads: C-0013 (non-root containers) on frontend, api and attacker, caused by a missing `runAsGroup`. It was fixed in `app/` and the `zt-*` namespaces now show no failed control (NSA 68.07 to 68.75, MITRE 65.11). The remaining failures come from third-party charts (Kyverno, External Secrets Operator, Falco, Vault) or are false positives (Kyverno's own webhooks flagged as a risk by C-0036 and C-0039); analysis in `docs/evidence/final/kubescape-analysis.md`.
 
-> **TODO (phase 8):** Trivy image scan by B, results in `docs/evidence/final/`.
+**Trivy** v0.76.2 (images read directly from containerd on zt-lab-b, HIGH and CRITICAL only) found 239 vulnerabilities in the four application images: nginx-unprivileged 65 (3 critical), podinfo 107 (6 critical, most of them in its two Go binaries), postgres 26 (1 critical) and curl 24 (2 critical). **Every one of them has a fixed version**: the cause is the age of the tags pinned at the start of the project, not the cluster configuration. The critical ones are OpenSSL CVE-2026-31789 (described by Trivy as a heap overflow on 32-bit systems, while our node is x86_64), brotli, the Go standard library and gRPC. They are accepted for the lab: changing versions a few days before delivery would invalidate the measurements, the rebuild and Kyverno's image allowlist. The controls of sections 4.3 to 4.6 limit what an exploit could do (non-root, read-only root filesystem, a single allowed flow, no token, Falco). Analysis and production recommendations (update and pin by digest, Trivy in CI, periodic rescans): `docs/evidence/final/trivy-analysis.md`.
 
 ## 7. Storage security
 
@@ -451,7 +453,7 @@ and the kernel. Details: section 4.2 and 4.5.
 Measured for the frontend (section 5): in the baseline, every service, the Kubernetes API
 and the Internet, plus every secret of `zt-data`. With all layers: **only the API on port 9898**,
 the legitimate flow, with no token to talk to Kubernetes, and no way to log into Vault even
-with a stolen token. Remaining risk: abusing the API itself (section 9). Confirmed on the cluster rebuilt from scratch: the measurement is identical (`docs/evidence/rebuild/results-zt-lab-a.md`).
+with a stolen token. Remaining risk: abusing the API itself (section 9). Confirmed on both clusters rebuilt from scratch: the measurement is identical (`docs/evidence/rebuild/results-zt-lab-a.md`, `results-zt-lab-b.md`).
 
 **4. What prevents or limits lateral movement?**
 Default-deny NetworkPolicy enforced by Cilium (network), the absence of tokens and
@@ -469,7 +471,7 @@ is needed, one PVC per component with `fsGroup`, and encryption at rest.
 **6. What are the limits of the controls?**
 See section 9. In short: everything runs on a **single node**, so a node compromise
 defeats every control. The legitimate frontend → API flow remains open. Several tools
-run with lab shortcuts (no TLS, default credentials). Detection is not prevention.
+run with lab shortcuts (no TLS, default credentials). The application images carry known vulnerabilities, all fixable by an update (section 6). Detection is not prevention.
 
 
 ## 9. Limits and residual risks
@@ -485,6 +487,7 @@ run with lab shortcuts (no TLS, default credentials). Detection is not preventio
 | Vault | TLS off, one unseal key, root token on the admin machine | TLS, auto-unseal with a KMS, revoke the root token after setup |
 | Encryption at rest | Key stored on the same node | KMS provider |
 | Audit | Log kept on the node only | Ship to a SIEM |
+| Images (supply chain) | 239 HIGH/CRITICAL vulnerabilities in the four application images, all with a fixed version; tags are not pinned by digest | Update the tags, pin by digest in the manifests and in Kyverno, Trivy in CI (`--exit-code 1 --severity CRITICAL --ignore-unfixed`), periodic rescans, a minimal image without `podcli` for the API |
 | Detection | Falco detects but does not block; command-line based exceptions; UI credentials rely on `envFrom` order; Falco pod allowed HTTPS to any destination | Response through Falco Talon or Tetragon enforcement; tighter exceptions; chart-native secret handling; FQDN egress rule |
 
 ## 10. Answer to the central question
@@ -538,12 +541,13 @@ the Vault unseal material is excluded by `.gitignore`.
 
 **Rebuild test.** On 8 November 2026 zt-lab-a was destroyed (`k3s-uninstall.sh`, reboot) and rebuilt by following only the README, in 47 minutes. The six acceptance criteria were met: node ready and Cilium healthy, the 6 Kyverno CLI tests, R1 and R10 refused, ESO synchronised and scoped to `zt-data`, the Falco alert on the bypass with no false alert at container start, and a blast-radius measurement identical to the original cluster. The rebuild found three gaps in the README (copying the kubeconfig, the initial `db-creds` Secret, the Kyverno wait on a slow link), fixed in commit `2549f76`. Journal and proofs: `docs/evidence/rebuild/`.
 
-> **TODO (B):** result of the same rebuild on zt-lab-b, in `docs/evidence/rebuild/`.
+The same test was run on zt-lab-b the same day, following the README as fixed by A, in about 50 minutes (12 of them spent downloading the Vault image over a 4G link). **All six criteria were met again**, and the blast-radius measurement is identical both to the original zt-lab-b and to zt-lab-a. This second rebuild, on another operating system and by the other team member, found three more gaps: the README does not list the tools to install first (Kyverno CLI, Helm, Cilium CLI); `k3s-uninstall.sh` leaves `/etc/cni/net.d`, so the node reports `Ready` before Cilium is installed; and `secrets/vault-unseal.sh` waited only 180 s for the Vault pod, too short on a slow link (raised to 600 s in commit `b3451c7`). One deviation is declared: the images already downloaded were preloaded through the k3s air-gap directory to save bandwidth, without changing any version or setting. Journal and proofs: `docs/evidence/rebuild/rebuild-zt-lab-b.md`, `criteres-zt-lab-b.txt`.
 
 ## Appendix A: evidence index
 
 | Section | Evidence |
 | --- | --- |
+| 2 | `docs/architecture/` (diagrams) |
 | 4.1 | `docs/evidence/baseline/`, `docs/evidence/phase-1/networkpolicy-check/` |
 | 4.2 | `docs/evidence/rbac/` |
 | 4.3 | `docs/evidence/network/` (including `api-to-database-zt-lab-a.txt`), `docs/evidence/cilium-l7/`, `docs/evidence/network-after-l7/`, `docs/evidence/network-vault-falco/` |
@@ -553,5 +557,5 @@ the Vault unseal material is excluded by `.gitignore`.
 | 5 | `docs/evidence/blast-radius.md`, `docs/evidence/integration/` |
 | 4.4 (failure modes) | `docs/evidence/fail-mode/` |
 | Cross-reviews | `docs/reviews/`, `docs/evidence/review/`, `docs/evidence/secrets-policy/` (R10, A1) |
-| 6 | `docs/evidence/final/` (kube-bench, Kubescape), `docs/evidence/kube-bench/` |
+| 6 | `docs/evidence/final/` (kube-bench, Kubescape, Trivy), `docs/evidence/kube-bench/` |
 | 11 | `docs/evidence/rebuild/` |
