@@ -470,7 +470,7 @@ is needed, one PVC per component with `fsGroup`, and encryption at rest.
 **6. What are the limits of the controls?**
 See section 9. In short: everything runs on a **single node**, so a node compromise
 defeats every control. The legitimate frontend → API flow remains open. Several tools
-run with lab shortcuts (no TLS, default credentials). The application images carry known vulnerabilities, all fixable by an update (section 6). Detection is not prevention.
+run with lab shortcuts (Vault without TLS, a single unseal key, the root token kept on the admin machine). The application images carry known vulnerabilities, all fixable by an update (section 6). Detection is not prevention.
 
 
 ## 9. Limits and residual risks
