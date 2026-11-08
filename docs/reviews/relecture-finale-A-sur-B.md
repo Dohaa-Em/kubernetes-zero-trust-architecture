@@ -19,3 +19,4 @@
 
 ## Verifie sans ecart
 Preuves citees dans docs/00-threat-model.md (11 chemins) ; ports et flux des schemas docs/architecture (9898, 5432, 8200, 2801, 2802, 96 regles, commit 11cb1d4) ; ligne Images de la section 9 ; question 3.
+Section 5 (blast radius) : tableau identique a docs/evidence/blast-radius.md ; diff integration zt-lab-a / zt-lab-b : seule la ligne d'en-tete differe (date, machine, noyau) ; Section 4.6.1 (audit) : exec, code 403 et 200, 0 occurrence du mot de passe, image du pod S3, niveaux conformes a cluster/audit/audit-policy.yaml ; Section 4.6.2 (chiffrement) : avant Disabled et marqueur 1, apres Enabled et marqueur 0, cle aescbckey-2026-11-06T20:01:30 ; Section 4.6.3 (Falco) : les cinq regles presentes dans alerts-zt-lab-b.tsv avec namespace et pod. Non verifie : ligne lisible par l'API oui/oui, et la frequence de la fausse alerte Vault avant reglage.
