@@ -5,19 +5,23 @@ Méthode : `k3s-uninstall.sh`, puis **uniquement** la section *Reproduce* du REA
 
 ## Déroulement
 
-| Étape README | Contenu | Durée approx. | Résultat |
-|---|---|---|---|
-| 1 | k3s (sans flannel ni kube-proxy), audit, chiffrement des Secrets | ~4 min | OK |
-| 2 | Cilium 1.20.4 + Hubble | ~2 min | OK |
-| 3 | Application (frontend, api, base, attaquant) | ~35 s | OK |
-| 4 | Vault 0.34.1 : init, unseal, configuration | ~12 min | OK après relance (voir trou B1) |
-| 5 | ESO 2.14.0 + SecretStore + ExternalSecret | ~4 min | OK, `SecretSynced` |
-| 6 | Falco 0.45.2 + Falcosidekick | ~2 min | OK |
-| 7 | NetworkPolicies + Kyverno + `kyverno test` | < 2 min | OK, 6/6 après installation du CLI (voir trou A1) |
-| 8 | `harden-serviceaccounts.sh` | ~1 min | OK, tous les pods Running |
-| 9 | `measure.sh rebuild` | ~15 s | identique aux mesures d'intégration |
+Durées relevées dans le journal brut ci-dessous (horodatage `===`). Total : 55 minutes, de l'étape 1 (13:12:58) à la mesure (14:07:38), plus 4 minutes de désinstallation et de redémarrage avant.
 
-La durée de l'étape 4 vient du téléchargement de l'image Vault sur la 4G, pas de la configuration elle-même.
+| Étape README | Contenu | Durée | Résultat |
+|---|---|---|---|
+| 1 | audit et chiffrement (drop-ins avant k3s) | < 1 min | OK |
+| 2 | k3s v1.36.5, import des images préchargées | 21 min | OK au 2e contrôle (13:25), voir la note |
+| 3 | Cilium 1.20.4 + Hubble | 2 min | OK |
+| 4 | namespaces, `db-creds` initial, application, RBAC | 3 min | OK, pods et DNS vérifiés |
+| 5 | Vault : init, unseal, configuration | 13 min | OK après relance (voir trou 1) |
+| 5 | ESO 2.14.0 + SecretStore + ExternalSecret | 5 min | OK, `SecretSynced` |
+| 5 | Falco 0.45.2 + Falcosidekick | 3 min | OK |
+| 6 | NetworkPolicies | < 1 min | OK |
+| 7 | Kyverno + `kyverno test` | 5 min (dont l'installation du CLI) | OK, 6/6 après installation du CLI (voir trou 2) |
+| 8 | `harden-serviceaccounts.sh` | 1 min | OK, tous les pods Running |
+| 9 | `measure.sh rebuild` | < 1 min | identique aux mesures d'intégration |
+
+Note sur l'étape 2 : au premier contrôle (13:17), `secrets-encrypt status` échouait encore et 17 images sur 27 étaient chargées ; au second (13:25), le nœud était `Ready`, le chiffrement `Enabled` et les 27 images chargées. Le contrôle de l'étape 3 a commencé à 13:34. La durée de l'étape 5 (Vault) vient du téléchargement de l'image Vault sur la 4G, pas de la configuration elle-même.
 
 ## Critères de réussite
 
@@ -34,10 +38,10 @@ Détail : [`criteres-zt-lab-b.txt`](criteres-zt-lab-b.txt) et [`results-zt-lab-b
 
 ## Trous trouvés dans le README et les scripts
 
-- **B1 (partie B, corrigé)** : `secrets/vault-unseal.sh` n'attendait le pod Vault que 180 s. Sur une connexion lente, le téléchargement de l'image dépasse ce délai et le script s'arrête. Le délai passe à 600 s.
-- **A1 (partie A)** : l'étape 7 lance `kyverno test` sans dire d'installer le CLI Kyverno 1.19.2. Une VM neuve n'a pas non plus Helm ni le CLI Cilium : il faut une liste de prérequis au début de *Reproduce*.
-- **A2 (partie A, remarque)** : `k3s-uninstall.sh` laisse `/etc/cni/net.d`, donc le nœud passe `Ready` avant que Cilium soit installé. Il suffit d'ajouter `sudo rm -rf /etc/cni/net.d` après la désinstallation.
-- **Écart avec zt-lab-a** : au critère 3a, zt-lab-b refuse aussi le pod via `disallow-latest-tag`, une politique qui n'apparaît pas dans `criteres-zt-lab-a.txt`. Il faut vérifier son mode (`Enforce` ou `Audit`) sur zt-lab-a.
+- **Trou 1 (partie B, corrigé dans `b3451c7`)** : `secrets/vault-unseal.sh` n'attendait le pod Vault que 180 s. Sur une connexion lente, le téléchargement de l'image dépasse ce délai et le script s'arrête. Le délai passe à 600 s.
+- **Trou 2 (partie A, corrigé dans `88b5e34`)** : l'étape 7 lance `kyverno test` sans dire d'installer le CLI Kyverno 1.19.2. Une VM neuve n'a pas non plus Helm ni le CLI Cilium : il faut une liste de prérequis au début de *Reproduce*.
+- **Trou 3 (partie A, corrigé dans `88b5e34`)** : `k3s-uninstall.sh` laisse `/etc/cni/net.d`, donc le nœud passe `Ready` avant que Cilium soit installé. Il suffit d'ajouter `sudo rm -rf /etc/cni/net.d` après la désinstallation.
+- **Écart avec zt-lab-a** : au critère 3a, zt-lab-b refuse aussi le pod via `disallow-latest-tag`, une politique qui n'apparaît pas dans `criteres-zt-lab-a.txt`. Vérifié par A : la politique est en `Enforce` sur zt-lab-a aussi, la capture initiale était tronquée (note datée dans `criteres-zt-lab-a.txt`).
 
 ## Écart déclaré par rapport au README
 
