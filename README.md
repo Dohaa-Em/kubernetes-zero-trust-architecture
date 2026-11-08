@@ -50,6 +50,9 @@ sudo cp cluster/k3s-config.yaml /etc/rancher/k3s/config.yaml
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.5+k3s1 sh -
 # the file is mode 0600 for root: copy it, do not just export KUBECONFIG
 mkdir -p ~/.kube && sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config && sudo chown $USER:$USER ~/.kube/config && chmod 600 ~/.kube/config
+# wait until the node is registered (a check run too early answers "No resources found");
+# on a clean machine the node only becomes Ready after Cilium, so do not wait for Ready here
+until kubectl get node -o name 2>/dev/null | grep -q .; do sleep 5; done
 
 # 3. Cilium 1.20.4 (replaces kube-proxy, VXLAN tunnel, Hubble relay and UI)
 cilium install --version 1.20.4 \

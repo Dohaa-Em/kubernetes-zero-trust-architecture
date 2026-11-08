@@ -141,7 +141,7 @@ denied. S2 and S4 are closed at the Kubernetes API level.
 
 Proofs for the last four rows: `docs/evidence/network-vault-falco/` (both clusters).
 
-Hubble captures from the compromised frontend (`docs/evidence/network/hubble-frontend-flows-zt-lab-a.txt`):
+Hubble captures from the compromised frontend (abridged excerpt: identities and retransmissions removed; full capture in `docs/evidence/network/hubble-frontend-flows-zt-lab-a.txt`):
 
 ```
 Nov  7 18:54:00.540: zt-frontend/frontend-5d9d6df54-tkphc:38409 <> zt-data/database-55f4778c8d-wwt6l:5432 policy-verdict:none EGRESS DENIED (TCP Flags: SYN)
@@ -178,7 +178,7 @@ avoid tying every flow to Cilium (`docs/architecture-networkpolicy-vs-cilium.md`
 
 The policies apply to the `zt-*` namespaces only (evidence: `docs/evidence/admission-kyverno/`, `docs/evidence/kyverno-extra/`, `docs/evidence/secrets-policy/`).
 
-**Gaps found by cross-review.** The review by Doha El Merabet found two real holes in our own policies. Both were fixed and retested on both clusters. initContainers escaped the tag, limits and allowlist rules (R1, commit `8441fdf`, `docs/evidence/review/`). A Secret in `zt-data` could still be modified by the administrator, because Kyverno tolerates existing violations by default (`allowExistingViolations: true` since version 1.13); `allowExistingViolations: false` closes it (R10, commit `8ca98b2`, `docs/evidence/secrets-policy/r10-fix-zt-lab-a.txt`). Finding such holes by review is an argument for the method.
+**Gaps found by cross-review.** The review by Doha El Merabet found two real holes in our own policies. Both were fixed and retested on both clusters. initContainers escaped the tag, limits and allowlist rules (R1, commit `8441fdf`, `docs/evidence/review/`). A Secret in `zt-data` could still be modified by the administrator, because Kyverno tolerates existing violations unless a rule sets `allowExistingViolations: false` ([Kyverno documentation](https://kyverno.io/docs/policy-types/cluster-policy/validate/)); that setting closes it (R10, commit `8ca98b2`, `docs/evidence/secrets-policy/r10-fix-zt-lab-a.txt`). Finding such holes by review is an argument for the method.
 
 **Limits that remain.** Ephemeral containers (`kubectl debug`) go through a subresource that the Pod CREATE rules do not match, so the image rules do not validate them. The mutation `+(automountServiceAccountToken): false` only applies when the field is absent: a pod that sets it to `true` keeps its token (seen with `detection/tests/token-reader-pod.yaml`), so it is a safe default and not a control (R8). The ClusterRole given to Kyverno's background controller to generate the default deny can also delete NetworkPolicies in the whole cluster: compromising Kyverno would erase the default deny (R9).
 

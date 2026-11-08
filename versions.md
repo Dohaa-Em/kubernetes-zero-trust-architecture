@@ -20,6 +20,7 @@ Les deux membres installent exactement ces versions. Toujours donner la version 
 | External Secrets Operator | chart 2.14.0 | API external-secrets.io/v1 |
 | kube-bench | 0.16.0 | profil k3s-cis-1.9, lancé sur zt-lab-a (Abir Majdi) et zt-lab-b (Doha El Merabet) |
 | Kubescape | v4.0.20 | cadres NSA et MITRE, lancé sur zt-lab-a (Abir Majdi) |
+| Trivy | 0.76.2 | images lues dans containerd, lancé sur zt-lab-b (Doha El Merabet) |
 
 ## Machines
 
