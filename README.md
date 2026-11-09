@@ -6,6 +6,15 @@ A reproducible Zero Trust lab on Kubernetes: default-deny networking, least-priv
 admission control, secret management and runtime detection, with measured results for four
 attack scenarios.
 
+## Deliverables
+| | |
+|---|---|
+| Report (PDF, French) | [`docs/report/Rapport_Zero_Trust.pdf`](docs/report/Rapport_Zero_Trust.pdf), LaTeX sources in [`docs/report/latex/`](docs/report/latex/) |
+| Technical report (Markdown, English) | [`docs/report/report.md`](docs/report/report.md) |
+| Demo video (4 min) | [Google Drive](https://drive.google.com/file/d/1gj5EWyhtxk6pGZi1-1RBWAKOx2ShKWZ_/view?usp=drive_link), details in [`docs/video/`](docs/video/) |
+| Architecture diagrams | [`docs/architecture/README.md`](docs/architecture/README.md) |
+| Evidence | [`docs/evidence/`](docs/evidence/) |
+
 ## Architecture
 ```text
 user -> frontend (zt-frontend:8080) -> api (zt-api:9898) -> database (zt-data:5432)
